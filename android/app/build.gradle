@@ -1,0 +1,86 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "io.github.crispedtoast836.sistema"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "io.github.crispedtoast836.sistema"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // No GitHub Actions o número da build vira o versionCode, então cada APK
+        // novo instala por cima do anterior sem precisar desinstalar.
+        versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+        versionName "1.0." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // Assinatura do APK "release": só é usada se as variáveis abaixo existirem
+    // (o workflow as preenche a partir dos Secrets do GitHub). Sem elas,
+    // o workflow gera apenas o APK de debug.
+    signingConfigs {
+        // Chave de DEBUG fixa, guardada no repositório (senha padrão "android").
+        // Sem ela, cada build do GitHub Actions teria uma assinatura diferente e
+        // o Android recusaria instalar o APK novo por cima do antigo — você teria
+        // que desinstalar e perderia o progresso salvo no app.
+        debug {
+            storeFile file("debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+        release {
+            def ks = System.getenv("SISTEMA_KEYSTORE_FILE")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("SISTEMA_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("SISTEMA_KEY_ALIAS")
+                keyPassword System.getenv("SISTEMA_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            if (System.getenv("SISTEMA_KEYSTORE_FILE")) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

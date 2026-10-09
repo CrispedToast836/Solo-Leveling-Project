@@ -1,0 +1,105 @@
+# Compila o APK Android do SISTEMA no GitHub (você não precisa de Android Studio).
+#
+# Quando roda: a cada push na branch main e também manualmente
+# (aba Actions → "Build APK Android" → Run workflow).
+#
+# Resultado: na página da execução, seção "Artifacts", baixe
+# "SISTEMA-apk-<número>" (um .zip com o .apk dentro).
+#
+# APK de debug: sempre gerado, assinado com android/app/debug.keystore (fixa),
+#               então cada APK novo instala por cima do anterior sem perder dados.
+# APK de release: só é gerado se você cadastrar os 4 Secrets
+#               SISTEMA_KEYSTORE_BASE64, SISTEMA_KEYSTORE_PASSWORD,
+#               SISTEMA_KEY_ALIAS e SISTEMA_KEY_PASSWORD (veja o README).
+
+name: Build APK Android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compilar APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar Java 21 (exigido pelo Capacitor 8 / Gradle)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Instalar dependências (Capacitor e plugins)
+        run: npm ci
+
+      - name: Copiar Leaflet, fontes e Capacitor para www/
+        run: npm run vendor
+
+      - name: Sincronizar o app web com o projeto Android
+        run: npx cap sync android
+
+      - name: Compilar APK de debug
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Preparar chave de release (só se os Secrets existirem)
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SISTEMA_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "file=$RUNNER_TEMP/release.keystore" >> "$GITHUB_OUTPUT"
+            echo "Chave de release encontrada: o APK de release também será gerado."
+          else
+            echo "Sem Secrets de release: gerando apenas o APK de debug."
+          fi
+
+      - name: Compilar APK de release assinado
+        if: steps.keystore.outputs.file != ''
+        working-directory: android
+        env:
+          SISTEMA_KEYSTORE_FILE: ${{ steps.keystore.outputs.file }}
+          SISTEMA_KEYSTORE_PASSWORD: ${{ secrets.SISTEMA_KEYSTORE_PASSWORD }}
+          SISTEMA_KEY_ALIAS: ${{ secrets.SISTEMA_KEY_ALIAS }}
+          SISTEMA_KEY_PASSWORD: ${{ secrets.SISTEMA_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Organizar os APKs
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk "dist/SISTEMA-1.0.${{ github.run_number }}-debug.apk"
+          if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk "dist/SISTEMA-1.0.${{ github.run_number }}-release.apk"
+          fi
+          ls -la dist
+
+      - name: Publicar APK nos Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SISTEMA-apk-${{ github.run_number }}
+          path: dist/*.apk
+          retention-days: 30
+          if-no-files-found: error

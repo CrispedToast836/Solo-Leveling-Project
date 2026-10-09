@@ -1,0 +1,28 @@
+{
+  "name": "sistema-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SISTEMA — app de treino estilo Solo Leveling (web + Android via Capacitor)",
+  "scripts": {
+    "vendor": "node scripts/copy-vendor.js",
+    "sync": "npm run vendor && npx cap sync android",
+    "build:debug": "npm run sync && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor-community/background-geolocation": "1.2.26",
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/filesystem": "8.1.4",
+    "@capacitor/geolocation": "8.2.3",
+    "@capacitor/local-notifications": "8.3.1",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3",
+    "@fontsource/orbitron": "5.3.0",
+    "@fontsource/rajdhani": "5.3.0",
+    "leaflet": "1.9.4"
+  }
+}

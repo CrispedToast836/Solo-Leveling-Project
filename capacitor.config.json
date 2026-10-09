@@ -1,0 +1,26 @@
+{
+  "appId": "io.github.crispedtoast836.sistema",
+  "appName": "SISTEMA",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#02050b"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DARK",
+      "initialViewportFitValueHint": "cover"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 300,
+      "backgroundColor": "#02050b",
+      "showSpinner": false
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_dungeon",
+      "iconColor": "#3fa9ff"
+    }
+  }
+}

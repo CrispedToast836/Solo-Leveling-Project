@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tema base: escuro, sem barra de ação. -->
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/sistema_bg</item>
+    </style>
+
+    <!-- Tema da tela principal (WebView). Barras de status e navegação escuras,
+         com ícones claros. No Android 15+ o app é "edge-to-edge": o fundo
+         escuro da janela aparece atrás das barras e o app respeita as áreas
+         seguras (env/var --safe-area-inset-*). -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/sistema_bg</item>
+        <item name="android:statusBarColor">@color/sistema_bg</item>
+        <item name="android:navigationBarColor">@color/sistema_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <!-- Splash: fundo escuro + hexágono "S" brilhante.
+         Android 12+ usa windowSplashScreen*; versões antigas usam @drawable/splash. -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/sistema_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    </style>
+</resources>

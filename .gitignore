@@ -1,0 +1,12 @@
+# Dependências (o GitHub Actions instala com "npm ci")
+node_modules/
+
+# Chaves de assinatura de RELEASE nunca vão para o repositório (use os Secrets).
+# A android/app/debug.keystore é de propósito: mantém a assinatura do APK de debug fixa.
+*.jks
+release.keystore
+*.keystore.base64
+
+# Sistema
+.DS_Store
+Thumbs.db

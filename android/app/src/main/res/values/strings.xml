@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SISTEMA</string>
+    <string name="title_activity_main">SISTEMA</string>
+    <string name="package_name">io.github.crispedtoast836.sistema</string>
+    <string name="custom_url_scheme">io.github.crispedtoast836.sistema</string>
+
+    <!-- Notificação fixa da Dungeon (plugin de GPS em segundo plano) -->
+    <string name="capacitor_background_geolocation_notification_channel_name">Dungeon (GPS)</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_dungeon</string>
+    <string name="capacitor_background_geolocation_notification_color">#3FA9FF</string>
+</resources>

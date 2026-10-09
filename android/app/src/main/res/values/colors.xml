@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cores do tema do SISTEMA usadas pelas telas nativas (splash, barras do sistema). -->
+<resources>
+    <color name="sistema_bg">#02050B</color>
+    <color name="sistema_blue">#3FA9FF</color>
+    <color name="sistema_cyan">#5FE3FF</color>
+    <color name="colorPrimary">#02050B</color>
+    <color name="colorPrimaryDark">#02050B</color>
+    <color name="colorAccent">#3FA9FF</color>
+</resources>
