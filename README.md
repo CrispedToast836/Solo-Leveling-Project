@@ -29,9 +29,13 @@ O mesmo código roda de dois jeitos:
 | `index.html` / `sw.js` (raiz) | Só redirecionam o endereço antigo do site para `www/`. |
 
 ## Baixar o APK
-1. Aba **Actions** → execução mais recente de **Build APK Android** (ícone verde ✓).
-2. Seção **Artifacts** → baixe **SISTEMA-apk-N** (um `.zip`) e extraia o `.apk`.
-3. Para gerar de novo sem mudar código: **Actions → Build APK Android → Run workflow**.
+**No celular, abra este link** (não precisa estar logado, baixa o `.apk` direto, sempre a versão mais nova):
+
+https://github.com/CrispedToast836/Solo-Leveling-Project/releases/latest/download/SISTEMA.apk
+
+Cada build também aparece em **Releases** (lado direito da página do repositório) e nos
+**Artifacts** da execução em **Actions** (estes exigem login e vêm em `.zip`).
+Para gerar de novo sem mudar código: **Actions → Build APK Android → Run workflow**.
 
 ## APK de release (opcional)
 O APK de **debug** já serve para uso pessoal e sempre instala por cima do anterior

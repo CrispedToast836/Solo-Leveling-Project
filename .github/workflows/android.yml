@@ -3,8 +3,9 @@
 # Quando roda: a cada push na branch main e também manualmente
 # (aba Actions → "Build APK Android" → Run workflow).
 #
-# Resultado: na página da execução, seção "Artifacts", baixe
-# "SISTEMA-apk-<número>" (um .zip com o .apk dentro).
+# Resultado (o jeito fácil, direto no celular, sem login):
+#   https://github.com/CrispedToast836/Solo-Leveling-Project/releases/latest/download/SISTEMA.apk
+# Cada build também vira uma Release (v1.0.<número>) e fica nos "Artifacts" da execução.
 #
 # APK de debug: sempre gerado, assinado com android/app/debug.keystore (fixa),
 #               então cada APK novo instala por cima do anterior sem perder dados.
@@ -20,7 +21,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # necessário para publicar o APK na página de Releases
 
 concurrency:
   group: android-${{ github.ref }}
@@ -109,7 +110,24 @@ jobs:
           if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
             cp android/app/build/outputs/apk/release/app-release.apk "dist/SISTEMA-1.0.${{ github.run_number }}-release.apk"
           fi
+          # Nome fixo: é ele que o link ".../releases/latest/download/SISTEMA.apk" baixa
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist/SISTEMA.apk
           ls -la dist
+
+      - name: Publicar o APK na página de Releases (link direto, sem login)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: SISTEMA 1.0.${{ github.run_number }}
+          make_latest: true
+          body: |
+            APK do SISTEMA gerado automaticamente a partir do commit ${{ github.sha }}.
+
+            **No celular:** toque em `SISTEMA.apk` abaixo para baixar e instalar.
+            Link que sempre aponta para a versão mais nova:
+            https://github.com/${{ github.repository }}/releases/latest/download/SISTEMA.apk
+          files: dist/*.apk
 
       - name: Publicar APK nos Artifacts
         uses: actions/upload-artifact@v4
