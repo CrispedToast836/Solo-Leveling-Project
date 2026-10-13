@@ -566,6 +566,14 @@ button.sig{min-height:44px;cursor:pointer;touch-action:manipulation}
 .gc-stats .ic{width:16px;height:16px;color:var(--pc)}
 .gc-src{display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-size:13px;line-height:1.35;color:var(--gold)}
 .gc-src .ic{width:16px;height:16px;flex:none;margin-top:1px}
+.gc-src.light{color:var(--muted)}
+.gc-src.light .ic{color:var(--cyan)}
+.scan-btn>span:last-child{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
+.scan-btn small{font-size:12px;font-weight:600;letter-spacing:0;opacity:.85}
+details.diag{margin-top:6px;font-size:12px;color:var(--muted)}
+details.diag summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--cyan);font-weight:700;list-style:none}
+details.diag summary::-webkit-details-marker{display:none}
+details.diag ul{margin:4px 0 0;padding-left:16px;line-height:1.4;word-break:break-word}
 .btn[disabled]{opacity:.55;cursor:not-allowed}
 .scan-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
 .gate-row{display:flex;justify-content:center;gap:12px;margin:16px 0 6px}
@@ -832,8 +840,29 @@ const CONFIG = {
     REROLLS: 5,                      // "Sortear outro" por varredura
     NIGHT_START_H: 19, NIGHT_END_H: 6,   // aviso de noite
 
-    OVERPASS_URLS: ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'],
-    OVERPASS_TIMEOUT_MS: 15000,
+    // Busca de lugares (Overpass API / OpenStreetMap)
+    OVERPASS_URLS: [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://overpass.private.coffee/api/interpreter',
+    ],
+    OVERPASS_TIMEOUT_MS: 15000,        // por servidor
+    OVERPASS_QUERY_TIMEOUT_S: 25,      // [timeout:25] da consulta
+    OVERPASS_EXTRA_TRIES: 1,           // nova tentativa depois de passar por todos
+    OVERPASS_RETRY_DELAY_MS: 3000,
+    OVERPASS_BUDGET_MS: 55000,         // tempo máximo da busca inteira
+    OVERPASS_LIMIT: 300,               // máximo de lugares por consulta
+    OVERPASS_MIN_INTERVAL_MS: 60000,   // intervalo mínimo entre consultas de verdade
+    PLACES_CELL_KM: 1,                 // cache por área de ~1 km
+    PLACES_CACHE_DAYS: 7,
+    PLACES_CACHE_MAX_CELLS: 25,
+
+    // Plano B e distância a pé (OSRM, perfil a pé do OpenStreetMap)
+    OSRM_NEAREST_URL: 'https://routing.openstreetmap.de/routed-foot/nearest/v1/foot/{lon},{lat}?number=1',
+    OSRM_ROUTE_URL: 'https://routing.openstreetmap.de/routed-foot/route/v1/foot/{lon1},{lat1};{lon2},{lat2}?overview=false',
+    OSRM_TIMEOUT_MS: 8000,
+    SNAP_MAX_M: 250,                   // rua mais longe que isso do ponto sorteado: não gruda
+    USE_WALK_ROUTE: true,              // usa a distância real a pé no tempo limite
   },
 };
 
@@ -923,7 +952,7 @@ function defaultState() {
     days: {},
     weeks: {},
     activities: [],          // dungeons (GPS) finalizadas — as rotas ficam em ROUTES_KEY
-    portals: { list: [], origin: null, type: 'walk', detectedAt: 0, expiresAt: 0, nextDetectAt: 0, rerolls: 0, offline: false, pool: [], seen: [] },
+    portals: { list: [], origin: null, type: 'walk', detectedAt: 0, expiresAt: 0, nextDetectAt: 0, rerolls: 0, offline: false, pool: [], seen: [], placesSource: null, diag: [] },
     portalStats: { cleared: 0, closed: 0, red: 0, byRank: { E: 0, D: 0, C: 0, B: 0, A: 0, S: 0 }, farthestM: 0, bestRank: null, fastestMs: null },
     lastProcessed: null,
   };
@@ -3509,7 +3538,7 @@ const PORTAL_KIND_LABEL = {
   fitness_station: 'Academia ao ar livre', garden: 'Jardim', recreation_ground: 'Área de lazer',
   track: 'Pista', dog_park: 'Parcão', square: 'Praça', pedestrian: 'Rua de pedestres',
   viewpoint: 'Mirante', artwork: 'Obra de arte', attraction: 'Ponto turístico', fountain: 'Fonte',
-  random: 'Ponto não verificado',
+  marketplace: 'Feira / mercado público', street: 'Via pública', random: 'Ponto não verificado',
 };
 // Brusque (centro): posição inicial do modo de teste quando não há GPS
 const DEV_DEFAULT_POS = [-27.0977, -48.9175];
@@ -3519,7 +3548,6 @@ let portalFlyPending = false;   // dar zoom nos portais depois da animação
 let portalFocusId = null;       // card destacado
 let portalMap = null;
 let livePortalMarker = null, livePortalLine = null;
-let overpassCache = { key: '', at: 0, list: [] };
 
 /* ---------- utilidades ---------- */
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -3577,9 +3605,10 @@ function portalRefPace(type) {
 }
 
 // Tempo limite = distância a pé × seu ritmo × folga + tempo para o GPS pegar sinal
-function portalLimitMs(straightM, paceMs, slack) {
+// factor = distância a pé ÷ linha reta (real pelo OSRM, ou CONFIG.PORTAL.ROUTE_FACTOR)
+function portalLimitMs(straightM, paceMs, slack, factor = CONFIG.PORTAL.ROUTE_FACTOR) {
   const P = CONFIG.PORTAL;
-  const ms = straightM * P.ROUTE_FACTOR / 1000 * paceMs * slack + P.START_BUFFER_MIN * 60000;
+  const ms = straightM * factor / 1000 * paceMs * slack + P.START_BUFFER_MIN * 60000;
   return Math.max(P.LIMIT_MIN_MIN, Math.ceil(ms / 60000)) * 60000;
 }
 
@@ -3589,11 +3618,14 @@ function rankFromScore(score) {
   return 'S';
 }
 
-function buildPortal(c, origin, { type, pace, red }) {
+// opts.slack / opts.routeM: reaproveita a folga e usa a distância real a pé (OSRM)
+function buildPortal(c, origin, { type, pace, red, slack: keepSlack, routeM: realRouteM }) {
   const P = CONFIG.PORTAL;
-  const straightM = haversine(origin, [c.lat, c.lng]);
-  const slack = red ? P.RED.SLACK : randIn(P.SLACK_RANGE[0], P.SLACK_RANGE[1]);
-  const routeKm = straightM * P.ROUTE_FACTOR / 1000;
+  const straightM = Math.max(1, haversine(origin, [c.lat, c.lng]));
+  const slack = keepSlack || (red ? P.RED.SLACK : randIn(P.SLACK_RANGE[0], P.SLACK_RANGE[1]));
+  const routeM = realRouteM && realRouteM >= straightM * 0.95 ? realRouteM : straightM * P.ROUTE_FACTOR;
+  const factor = routeM / straightM;
+  const routeKm = routeM / 1000;
   let rank = rankFromScore(routeKm / slack);
   if (red) rank = RANK_IDS[Math.min(RANK_IDS.length - 1, RANK_IDS.indexOf(rank) + P.RED.RANK_BONUS)];
   const xp = Math.round((P.XP_RANK[rank] + routeKm * P.XP_PER_KM) * (red ? P.RED.XP_MULT : 1));
@@ -3602,10 +3634,13 @@ function buildPortal(c, origin, { type, pace, red }) {
     osmId: c.id || null, lat: +c.lat.toFixed(6), lng: +c.lng.toFixed(6),
     name: c.name || null, kind: c.kind, source: c.source,
     straightM: Math.round(straightM), slack: Math.round(slack * 100) / 100,
-    rank, red: !!red, xp, limitMs: portalLimitMs(straightM, pace.msPerKm, slack),
+    routeM: Math.round(routeM), routeFactor: Math.round(factor * 100) / 100,
+    routeSource: realRouteM && realRouteM >= straightM * 0.95 ? 'osrm' : 'estimate',
+    rank, red: !!red, xp, limitMs: portalLimitMs(straightM, pace.msPerKm, slack, factor),
     paceMs: Math.round(pace.msPerKm), paceSource: pace.source, type,
   };
 }
+
 const portalTitle = p => p.red ? 'PORTAL VERMELHO' : `Portal rank ${p.rank}`;
 const portalPlace = p => p.name ? `${p.name} · ${PORTAL_KIND_LABEL[p.kind] || 'Local'}` : (PORTAL_KIND_LABEL[p.kind] || 'Local');
 
@@ -3629,7 +3664,7 @@ function parseOverpass(json, origin) {
     const lat = el.lat != null ? el.lat : (el.center && el.center.lat);
     const lng = el.lon != null ? el.lon : (el.center && el.center.lon);
     if (lat == null || lng == null || !isSafePortalSpot(t)) continue;
-    const kind = t.leisure || (t.place === 'square' ? 'square' : null) || (t.highway === 'pedestrian' ? 'pedestrian' : null) || t.tourism || t.amenity;
+    const kind = t.leisure || (t.place === 'square' ? 'square' : null) || (t.amenity === 'marketplace' ? 'marketplace' : null) || (t.highway === 'pedestrian' ? 'pedestrian' : null) || t.tourism || t.amenity;
     if (!PORTAL_KIND_LABEL[kind]) continue;
     const c = { id: el.type[0] + el.id, lat: +lat.toFixed(6), lng: +lng.toFixed(6), name: (t.name || '').slice(0, 40) || null, kind, source: 'osm' };
     c.d = haversine(origin, [c.lat, c.lng]);
@@ -3640,32 +3675,189 @@ function parseOverpass(json, origin) {
   return out.sort((a, b) => a.d - b.d);
 }
 
-async function fetchPortalCandidates(origin, radius) {
-  const key = `${origin[0].toFixed(3)},${origin[1].toFixed(3)},${Math.round(radius / 100)}`;
-  if (overpassCache.key === key && Date.now() - overpassCache.at < 30 * 60000) return overpassCache.list;
-  const A = `(around:${Math.round(radius)},${origin[0].toFixed(6)},${origin[1].toFixed(6)})`;
-  const q = `[out:json][timeout:20];(` +
-    `nwr["leisure"~"^(park|playground|pitch|fitness_station|garden|recreation_ground|track|dog_park|sports_centre)$"]${A};` +
-    `nwr["place"="square"]${A};way["highway"="pedestrian"]${A};` +
-    `node["tourism"~"^(viewpoint|artwork|attraction)$"]${A};node["amenity"="fountain"]${A};` +
-    `);out center tags 500;`;
-  let lastErr = null;
-  for (const url of CONFIG.PORTAL.OVERPASS_URLS) {
-    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, CONFIG.PORTAL.OVERPASS_TIMEOUT_MS);
+/* ---------- HTTP com diagnóstico (fetch no navegador, CapacitorHttp no APK) ----------
+   Retorna sempre um objeto: { ok, status, json, via, ms, error }  (nunca lança erro) */
+async function httpJson({ url, method = 'GET', form = null, timeoutMs = 15000 }) {
+  const t0 = Date.now();
+  const done = (o) => ({ ms: Date.now() - t0, ...o });
+  // APK: CapacitorHttp faz a requisição pelo Android (sem CORS do WebView)
+  const CH = IS_NATIVE && window.capacitorExports && window.capacitorExports.CapacitorHttp;
+  if (CH) {
     try {
-      const res = await fetch(url, {
-        method: 'POST', body: 'data=' + encodeURIComponent(q),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        signal: ctrl ? ctrl.signal : undefined,
+      const r = await CH.request({
+        url, method, responseType: 'json', connectTimeout: timeoutMs, readTimeout: timeoutMs,
+        headers: form ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {},
+        data: form ? form : undefined,          // objeto → o Android codifica como formulário
       });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const list = parseOverpass(await res.json(), origin);
-      overpassCache = { key, at: Date.now(), list };
-      return list;
-    } catch (e) { lastErr = e; } finally { clearTimeout(timer); }
+      let json = r.data;
+      if (typeof json === 'string') { try { json = JSON.parse(json); } catch (e) { /* não é JSON */ } }
+      const ok = r.status >= 200 && r.status < 300 && json && typeof json === 'object';
+      return done({ ok, status: r.status, json, via: 'CapacitorHttp',
+        error: ok ? null : (r.status >= 200 && r.status < 300 ? 'resposta não é JSON' : null),
+        text: typeof r.data === 'string' ? r.data.slice(0, 200) : null });
+    } catch (e) {
+      // o plugin falhou (não é erro HTTP): tenta o fetch normal abaixo
+      console.warn('[SISTEMA] CapacitorHttp falhou, tentando fetch', e);
+    }
   }
-  throw lastErr || new Error('overpass');
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, timeoutMs);
+  try {
+    const opts = { method, signal: ctrl ? ctrl.signal : undefined };
+    if (form) {
+      opts.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+      opts.body = Object.entries(form).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    }
+    const res = await fetch(url, opts);
+    const text = await res.text();
+    let json = null;
+    try { json = JSON.parse(text); } catch (e) { /* não é JSON */ }
+    const ok = res.ok && !!json;
+    return done({ ok, status: res.status, json, via: 'fetch', error: ok ? null : (res.ok ? 'resposta não é JSON' : null), text: ok ? null : text.slice(0, 200) });
+  } catch (e) {
+    const timeout = e && e.name === 'AbortError';
+    return done({ ok: false, status: 0, json: null, via: 'fetch',
+      error: timeout ? `tempo esgotado (${Math.round(timeoutMs / 1000)} s)` : `rede/CORS (${(e && e.message) || e})` });
+  } finally { clearTimeout(timer); }
+}
+
+// Texto curto para o "Ver detalhes"
+function describeHttp(host, r) {
+  if (r.ok) return `${host}: ok em ${(r.ms / 1000).toFixed(1)} s (${r.via})`;
+  const st = { 400: 'consulta recusada (400)', 403: 'acesso bloqueado (403)', 406: 'requisição recusada (406)',
+    429: 'muitas requisições (429)', 502: 'servidor fora do ar (502)', 503: 'servidor ocupado (503)', 504: 'servidor sobrecarregado (504)' }[r.status];
+  const why = r.error || st || (r.status ? `HTTP ${r.status}` : 'falhou');
+  return `${host}: ${why} · ${(r.ms / 1000).toFixed(1)} s · ${r.via}${r.text && r.status === 400 ? ` · ${r.text.replace(/\s+/g, ' ').slice(0, 120)}` : ''}`;
+}
+const hostOf = url => { try { return new URL(url).hostname; } catch (e) { return url; } };
+
+/* ---------- cache de lugares (localStorage, por área de ~1 km) ---------- */
+const PLACES_KEY = 'sistema_places_v1';
+function loadPlacesCache() {
+  try { const c = JSON.parse(localStorage.getItem(PLACES_KEY)); if (c && c.cells) return c; } catch (e) { /* ignora */ }
+  return { v: 1, lastNetAt: 0, cells: {} };
+}
+function savePlacesCache(c) {
+  const P = CONFIG.PORTAL, now = Date.now();
+  // limpa áreas velhas e mantém só as mais recentes
+  const keys = Object.keys(c.cells).filter(k => now - c.cells[k].at < P.PLACES_CACHE_DAYS * 86400000)
+    .sort((a, b) => c.cells[b].at - c.cells[a].at).slice(0, P.PLACES_CACHE_MAX_CELLS);
+  c.cells = Object.fromEntries(keys.map(k => [k, c.cells[k]]));
+  try { localStorage.setItem(PLACES_KEY, JSON.stringify(c)); }
+  catch (e) {   // sem espaço: guarda só a área atual
+    const k = keys[0];
+    try { localStorage.setItem(PLACES_KEY, JSON.stringify({ ...c, cells: k ? { [k]: c.cells[k] } : {} })); } catch (e2) { /* ignora */ }
+  }
+}
+// Célula da grade (CELL_KM) que contém o ponto, e o centro dela
+function placesCell(origin) {
+  const deg = CONFIG.PORTAL.PLACES_CELL_KM / 111.32;
+  const lngDeg = deg / Math.cos(origin[0] * Math.PI / 180);
+  const cy = Math.floor(origin[0] / deg), cx = Math.floor(origin[1] / lngDeg);
+  return { key: `${cy}:${cx}`, center: [(cy + 0.5) * deg, (cx + 0.5) * lngDeg] };
+}
+const packPlace = c => [c.lat, c.lng, c.kind, c.name || '', c.id];
+const unpackPlace = (a, origin) => ({ lat: a[0], lng: a[1], kind: a[2], name: a[3] || null, id: a[4], source: 'osm', d: haversine(origin, [a[0], a[1]]) });
+
+/* ---------- busca de lugares: cache → Overpass (vários servidores) ----------
+   Retorna { pool, source: 'cache'|'network'|'none', diag: [linhas de texto] } */
+let placesLastNetAt = 0;
+async function getPortalPlaces(origin, needR, onStatus) {
+  const P = CONFIG.PORTAL, diag = [];
+  const cache = loadPlacesCache();
+  const cell = placesCell(origin);
+  const hit = cache.cells[cell.key];
+  const fresh = hit && Date.now() - hit.at < P.PLACES_CACHE_DAYS * 86400000;
+  if (fresh && hit.radius >= haversine(hit.center, origin) + needR) {
+    const pool = hit.list.map(a => unpackPlace(a, origin)).filter(c => c.d <= needR).sort((a, b) => a.d - b.d);
+    diag.push(`cache da área: ${pool.length} lugares (salvo ${new Date(hit.at).toLocaleDateString('pt-BR')})`);
+    return { pool, source: 'cache', diag };
+  }
+
+  // Respeita os servidores gratuitos: intervalo mínimo entre consultas de verdade
+  const last = Math.max(placesLastNetAt, cache.lastNetAt || 0);
+  const wait = P.OVERPASS_MIN_INTERVAL_MS - (Date.now() - last);
+  if (wait > 0) {
+    diag.push(`consulta pulada: a última foi há ${Math.round((Date.now() - last) / 1000)} s (mínimo ${Math.round(P.OVERPASS_MIN_INTERVAL_MS / 1000)} s entre consultas)`);
+    return nearbyCacheOr(cache, origin, needR, diag);
+  }
+
+  // Consulta leve: só o raio necessário (mais meia diagonal da célula, para o cache valer na área toda)
+  const qR = Math.round(needR + P.PLACES_CELL_KM * 1000 * 0.71);
+  const A = `(around:${qR},${cell.center[0].toFixed(5)},${cell.center[1].toFixed(5)})`;
+  const q = `[out:json][timeout:${P.OVERPASS_QUERY_TIMEOUT_S}];(` +
+    `nwr["leisure"~"^(park|playground|pitch|sports_centre)$"]${A};` +
+    `nwr["place"="square"]${A};nwr["amenity"="marketplace"]${A};way["highway"="pedestrian"]${A};` +
+    `);out center qt ${P.OVERPASS_LIMIT};`;
+  const urls = P.OVERPASS_URLS, tries = urls.length + P.OVERPASS_EXTRA_TRIES;
+  const t0 = Date.now();
+  placesLastNetAt = Date.now();
+  cache.lastNetAt = placesLastNetAt;
+  for (let i = 0; i < tries; i++) {
+    if (Date.now() - t0 > P.OVERPASS_BUDGET_MS) { diag.push('desisti: tempo total da busca esgotado'); break; }
+    if (i === urls.length) await new Promise(r => setTimeout(r, P.OVERPASS_RETRY_DELAY_MS));   // nova tentativa
+    const url = urls[i % urls.length];
+    if (onStatus) onStatus(`servidor ${i % urls.length + 1}/${urls.length}${i >= urls.length ? ' (2ª tentativa)' : ''}`);
+    const r = await httpJson({ url, method: 'POST', form: { data: q }, timeoutMs: P.OVERPASS_TIMEOUT_MS });
+    diag.push(describeHttp(hostOf(url), r));
+    console.warn('[SISTEMA] overpass', hostOf(url), r.ok ? 'ok' : (r.error || r.status), r.ms + 'ms');
+    if (!r.ok) continue;
+    if (!Array.isArray(r.json.elements)) { diag[diag.length - 1] += ' · resposta sem "elements"'; continue; }
+    if (r.json.remark && /runtime error|timed out/i.test(r.json.remark)) { diag[diag.length - 1] += ` · ${r.json.remark.slice(0, 80)}`; continue; }
+    const list = parseOverpass(r.json, cell.center);
+    cache.cells[cell.key] = { at: Date.now(), center: cell.center, radius: qR, list: list.map(packPlace) };
+    savePlacesCache(cache);
+    const pool = list.map(c => ({ ...c, d: haversine(origin, [c.lat, c.lng]) })).filter(c => c.d <= needR).sort((a, b) => a.d - b.d);
+    diag.push(`${list.length} lugares na área · ${pool.length} dentro do alcance`);
+    return { pool, source: 'network', diag };
+  }
+  savePlacesCache(cache);   // grava o horário da tentativa (intervalo mínimo)
+  return nearbyCacheOr(cache, origin, needR, diag);
+}
+
+// Overpass indisponível: usa lugares salvos de uma área vizinha que cubra você, se houver
+function nearbyCacheOr(cache, origin, needR, diag) {
+  const near = Object.values(cache.cells).filter(c => haversine(c.center, origin) <= c.radius)
+    .sort((a, b) => b.at - a.at)[0];
+  if (near) {
+    const pool = near.list.map(a => unpackPlace(a, origin)).filter(c => c.d <= needR).sort((a, b) => a.d - b.d);
+    if (pool.length) { diag.push(`usando lugares salvos de uma área próxima (${pool.length})`); return { pool, source: 'cache', diag }; }
+  }
+  return { pool: [], source: 'none', diag };
+}
+
+/* ---------- OSRM (perfil a pé): grudar ponto na rua e medir distância a pé ---------- */
+async function snapToWalkway(lat, lng) {
+  const P = CONFIG.PORTAL;
+  const url = P.OSRM_NEAREST_URL.replace('{lon}', lng.toFixed(6)).replace('{lat}', lat.toFixed(6));
+  const r = await httpJson({ url, timeoutMs: P.OSRM_TIMEOUT_MS });
+  const w = r.ok && r.json.code === 'Ok' && r.json.waypoints && r.json.waypoints[0];
+  if (!w || !(w.distance <= P.SNAP_MAX_M)) return { ok: false, line: describeHttp(hostOf(url), r) + (w ? ` · rua mais próxima a ${Math.round(w.distance)} m (longe demais)` : '') };
+  return { ok: true, lat: w.location[1], lng: w.location[0], name: w.name || null, line: `rua mais próxima: ${w.name || 'sem nome'} a ${Math.round(w.distance)} m` };
+}
+async function walkRouteM(from, to) {
+  const P = CONFIG.PORTAL;
+  if (!P.USE_WALK_ROUTE) return null;
+  const url = P.OSRM_ROUTE_URL.replace('{lon1}', from[1].toFixed(6)).replace('{lat1}', from[0].toFixed(6))
+    .replace('{lon2}', to[1].toFixed(6)).replace('{lat2}', to[0].toFixed(6));
+  const r = await httpJson({ url, timeoutMs: P.OSRM_TIMEOUT_MS });
+  const route = r.ok && r.json.code === 'Ok' && r.json.routes && r.json.routes[0];
+  return route && route.distance > 0 ? route.distance : null;
+}
+
+// Depois do sorteio: gruda os pontos aleatórios na rua e calcula a distância real a pé
+async function finalizePortal(p, origin, diag) {
+  let c = { id: p.osmId, lat: p.lat, lng: p.lng, name: p.name, kind: p.kind, source: p.source };
+  if (p.source === 'random') {
+    const s = await snapToWalkway(p.lat, p.lng);
+    if (diag) diag.push(`plano B: ${s.line}`);
+    if (s.ok) c = { id: null, lat: s.lat, lng: s.lng, name: s.name, kind: 'street', source: 'snapped' };
+  }
+  const routeM = await walkRouteM(origin, [c.lat, c.lng]);
+  const ctx = { type: p.type, pace: { msPerKm: p.paceMs, source: p.paceSource }, red: p.red, slack: p.slack, routeM };
+  const np = buildPortal(c, origin, ctx);
+  np.id = p.id; np.band = p.band;
+  return np;
 }
 
 const farEnough = (c, chosen) => chosen.every(o => haversine([o.lat, o.lng], [c.lat, c.lng]) >= CONFIG.PORTAL.MIN_SPACING_M);
@@ -3748,6 +3940,11 @@ async function getHerePosition() {
 }
 
 /* ---------- ações ---------- */
+function setScanStatus(txt) {
+  const el = document.querySelector('[data-scan-status]');
+  if (el) el.textContent = txt;
+}
+
 async function detectPortals() {
   const ps = state.portals, now = Date.now();
   if (portalScanning || gpsLive) return;
@@ -3764,20 +3961,26 @@ async function detectPortals() {
     const origin = [here.lat, here.lng];
     const L = state.player.level;
     const radius = CONFIG.PORTAL.DIST_MAX_M(L) * CONFIG.PORTAL.RED.DIST_MULT * 1.05;
-    let pool = [], offline = false;
-    try { pool = await fetchPortalCandidates(origin, radius); }
-    catch (e) { offline = true; }
+    setScanStatus('buscando lugares…');
+    const places = await getPortalPlaces(origin, radius, s => setScanStatus(`consultando ${s}…`));
+    const pool = places.pool, diag = places.diag.slice();
     const type = gpsType || defaultGpsType();
-    const { list, seen } = buildPortalSet(origin, pool, type);
+    const built = buildPortalSet(origin, pool, type);
+    // plano B: gruda pontos aleatórios na rua + distância real a pé (OSRM)
+    setScanStatus('calculando rotas a pé…');
+    const list = await Promise.all(built.list.map(p => finalizePortal(p, origin, diag)));
+    list.sort((a, b) => a.straightM - b.straightM);
+    const anyRandom = list.some(p => p.source === 'random');
     const t = Date.now();
     state.portals = {
       list, origin, type, detectedAt: t,
       expiresAt: t + CONFIG.PORTAL.EXPIRE_MIN * 60000,
       nextDetectAt: t + CONFIG.PORTAL.COOLDOWN_MIN * 60000,
-      rerolls: CONFIG.PORTAL.REROLLS, offline,
+      rerolls: CONFIG.PORTAL.REROLLS, offline: anyRandom,
       // guarda só os lugares mais próximos da faixa útil, para "Sortear outro"
       pool: pool.filter(c => c.d <= radius).slice(0, 80).map(({ id, lat, lng, name, kind, source }) => ({ id, lat, lng, name, kind, source })),
-      seen,
+      seen: built.seen,
+      placesSource: places.source, diag: diag.slice(-12),
     };
     save();
     portalFlyPending = true;
@@ -3787,7 +3990,7 @@ async function detectPortals() {
     render();
     queueBig({ type: 'gates', list });
     flushBig();
-    if (offline) toast('Sem conexão com o OpenStreetMap: portais em pontos aleatórios. Confira o local antes de ir.', 'danger');
+    if (anyRandom) toast('Sem conexão com o OpenStreetMap: portais em pontos aleatórios. Confira o local antes de ir.', 'danger');
   } finally {
     portalScanning = false;
     if (currentTab === 'gps' && !gpsLive) {
@@ -3797,10 +4000,10 @@ async function detectPortals() {
   }
 }
 
-function rerollPortal(id) {
+async function rerollPortal(id) {
   const ps = state.portals;
   const i = ps.list.findIndex(p => p.id === id);
-  if (i < 0) return;
+  if (i < 0 || rerollBusy) return;
   if (ps.rerolls <= 0 && !DEV.noCooldown) { toast('Sem sorteios restantes nesta varredura.'); return; }
   const old = ps.list[i], others = ps.list.filter(p => p.id !== id);
   const [lo, hi] = old.band || [old.straightM * 0.8, old.straightM * 1.2];
@@ -3809,9 +4012,20 @@ function rerollPortal(id) {
          || pickCandidate(ps.pool, ps.origin, CONFIG.PORTAL.DIST_MIN_M(L) * m, CONFIG.PORTAL.DIST_MAX_M(L) * m, others, ps.seen)
          || randomSpot(ps.origin, lo, hi, others);
   if (c.id) ps.seen.push(c.id);
-  const np = buildPortal(c, ps.origin, { type: ps.type, pace: portalRefPace(ps.type), red: old.red });
-  np.band = old.band;
-  ps.list[i] = np;
+  rerollBusy = true;
+  toast('Sorteando outro portal…');
+  let np;
+  try {
+    const raw = buildPortal(c, ps.origin, { type: ps.type, pace: portalRefPace(ps.type), red: old.red });
+    raw.band = old.band;
+    const diag = [];
+    np = await finalizePortal(raw, ps.origin, diag);
+    if (diag.length) ps.diag = (ps.diag || []).concat(diag).slice(-12);
+  } finally { rerollBusy = false; }
+  const j = state.portals.list.findIndex(p => p.id === id);   // a lista pode ter mudado no meio
+  if (j < 0) return;
+  state.portals.list[j] = np;
+  state.portals.offline = state.portals.list.some(p => p.source === 'random');
   if (ps.rerolls > 0) ps.rerolls--;
   portalFocusId = np.id;
   save();
@@ -3819,6 +4033,7 @@ function rerollPortal(id) {
   toast(`Novo portal: rank ${np.rank} · ${fmtDist(np.straightM)}.`);
   setTimeout(() => focusPortal(np.id, false), 50);
 }
+let rerollBusy = false;
 
 function focusPortal(id, scroll = true) {
   const p = state.portals.list.find(x => x.id === id);
@@ -3863,7 +4078,7 @@ function portalTick(now) {
       return;
     }
     // Saiu de outro lugar, mais longe que na varredura? Recalcula o tempo (nunca diminui)
-    if (d0 > p.straightM * 1.15) p.limitMs = Math.max(p.limitMs, portalLimitMs(d0, p.paceMs, p.slack));
+    if (d0 > p.straightM * 1.15) p.limitMs = Math.max(p.limitMs, portalLimitMs(d0, p.paceMs, p.slack, p.routeFactor || CONFIG.PORTAL.ROUTE_FACTOR));
     p.startedAt = now; p.deadline = now + p.limitMs; p.startDist = Math.round(d0); p.lastDist = d0;
     saveLive();
     toast(`Contagem iniciada: ${fmtDuration(p.limitMs)} para alcançar o portal.`, 'gold');
@@ -4011,7 +4226,7 @@ function portalBadge(p, big = false) {
 }
 
 function portalCardHtml(p, rerolls) {
-  const routeKm = p.straightM * CONFIG.PORTAL.ROUTE_FACTOR;
+  const routeKm = p.routeM || p.straightM * CONFIG.PORTAL.ROUTE_FACTOR;   // em metros
   const needPace = p.limitMs / (routeKm / 1000);
   return `
   <div class="gate-card ${p.red ? 'red' : ''} ${portalFocusId === p.id ? 'focus' : ''}" data-id="${p.id}" style="${pcStyle(p)}">
@@ -4021,11 +4236,12 @@ function portalCardHtml(p, rerolls) {
       <span class="gc-xp">+${p.xp} XP</span>
     </button>
     <div class="gc-stats">
-      <span>${icon('route')} ${fmtDist(p.straightM)} <em>(~${fmtDist(routeKm)} a pé)</em></span>
+      <span>${icon('route')} ${fmtDist(p.straightM)} <em>(${p.routeSource === 'osrm' ? '' : '~'}${fmtDist(routeKm)} a pé)</em></span>
       <span>${icon('clock')} ${Math.round(p.limitMs / 60000)} min</span>
       <span>${icon('gauge')} ${needPace > 30 * 60000 ? 'ritmo livre' : `precisa de ${fmtPace(needPace)}/km`}</span>
     </div>
     ${p.source === 'random' ? `<div class="gc-src">${icon('alert')}<span>Local não verificado (ponto aleatório). Pode cair em lugar sem acesso: sorteie outro se precisar.</span></div>` : ''}
+    ${p.source === 'snapped' ? `<div class="gc-src light">${icon('pin')}<span>Portal em via pública próxima${p.name ? ` (${esc(p.name)})` : ''}.</span></div>` : ''}
     <div class="m-actions">
       <button class="btn ghost" data-act="gps-portal-reroll" data-id="${p.id}" ${rerolls <= 0 && !DEV.noCooldown ? 'disabled' : ''}>${icon('undo')} Sortear (${Math.max(0, rerolls)})</button>
       <button class="btn primary" data-act="gps-portal-enter" data-id="${p.id}">${icon('swords')} Entrar no portal</button>
@@ -4039,12 +4255,19 @@ function renderPortalPanel() {
   const canDetect = !portalScanning && (cd === 0 || DEV.noCooldown);
   const pace = portalRefPace(gpsType || defaultGpsType());
   const btn = portalScanning
-    ? `<button class="btn primary big block" data-act="gps-portal-detect" data-scanning="1" disabled><span class="scan-dot"></span> ESCANEANDO A ÁREA…</button>`
+    ? `<button class="btn primary big block scan-btn" data-act="gps-portal-detect" data-scanning="1" disabled><span class="scan-dot"></span><span>ESCANEANDO A ÁREA…<small data-scan-status>localizando você…</small></span></button>`
     : canDetect
       ? `<button class="btn primary big block" data-act="gps-portal-detect">${icon('target')} ${list.length ? 'Detectar de novo' : 'Detectar portais'}</button>`
       : `<button class="btn big block" data-act="gps-portal-detect" disabled>${icon('hourglass')} <span data-portal-cd>Nova varredura em ${Math.ceil(cd / 60000)} min</span></button>`;
   const night = isNight() ? `<div class="warn">${icon('alert')}<span>É noite: prefira portais em ruas movimentadas e iluminadas. Se o lugar parecer deserto, sorteie outro.</span></div>` : '';
-  const offline = list.length && ps.offline ? `<div class="warn danger">${icon('alert')}<span>Sem conexão com o OpenStreetMap: os portais estão em pontos aleatórios e podem não ser acessíveis.</span></div>` : '';
+  // Avisos: cache/rede → nenhum · via pública (plano B) → leve · ponto 100% aleatório → vermelho
+  const details = (ps.diag || []).length ? `<details class="diag"><summary>Ver detalhes</summary><ul>${ps.diag.map(l => `<li>${esc(l)}</li>`).join('')}</ul></details>` : '';
+  const anyRandom = list.some(p => p.source === 'random'), anySnap = list.some(p => p.source === 'snapped');
+  const offline = !list.length ? '' : anyRandom
+    ? `<div class="warn danger">${icon('alert')}<div><span>Sem conexão com o OpenStreetMap: os portais estão em pontos aleatórios e podem não ser acessíveis.</span>${details}</div></div>`
+    : anySnap
+      ? `<div class="note">${icon('pin')}<div><span>Praças e parques não carregaram agora: ${list.length > 1 ? 'alguns portais estão' : 'o portal está'} em via pública próxima.</span>${details}</div></div>`
+      : '';
   const showMap = list.length || DEV.active;
   return `
   <section class="panel gates-panel">
@@ -4139,7 +4362,7 @@ function updatePortalHud(now) {
     $('gps-p-time').textContent = fmtDuration(left);
     tc.className = 'gh-cell' + (left < 60000 ? ' urgent' : '');
     st.textContent = g.status === 'paused' ? 'PAUSADO · O TEMPO CORRE' : 'PORTAL ABERTO';
-    const routeLeft = Math.max(0, dist - arriveRadius(gpsLastFix && gpsLastFix.acc)) * CONFIG.PORTAL.ROUTE_FACTOR;
+    const routeLeft = Math.max(0, dist - arriveRadius(gpsLastFix && gpsLastFix.acc)) * (p.routeFactor || CONFIG.PORTAL.ROUTE_FACTOR);
     const need = routeLeft > 10 ? left / (routeLeft / 1000) : Infinity;
     const ratio = need / p.paceMs;
     pc.className = 'gh-cell wide ' + (ratio >= 1.1 ? 'ok' : ratio >= 0.95 ? 'tight' : 'hard');
