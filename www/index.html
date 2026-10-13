@@ -509,13 +509,22 @@ button.sig{min-height:44px;cursor:pointer;touch-action:manipulation}
 .hold.holding .hold-fill{transform:scaleX(1);transition:transform 1s linear}
 .hold-label{position:relative;display:inline-flex;align-items:center;gap:8px}
 .map-wrap{position:relative;isolation:isolate;margin-top:14px}
-.map-wrap::after{content:'';position:absolute;inset:0;z-index:500;pointer-events:none;border-radius:4px;box-shadow:inset 0 0 40px rgba(2,8,20,.9)}
+.map-wrap::after{content:'';position:absolute;inset:0;z-index:500;pointer-events:none;border-radius:4px;box-shadow:inset 0 0 14px rgba(2,8,20,.55)}
 .map{height:34vh;min-height:220px;border:1px solid var(--line-mid);border-radius:4px;overflow:hidden;background:#06101f}
 .map.small{height:240px;min-height:0}
 .map-off{display:grid;place-items:center;height:100%;padding:20px;text-align:center;color:var(--muted);font-size:14px;line-height:1.45}
-.leaflet-container{background:#06101f;font-family:var(--ui)}
-.leaflet-tile-pane{filter:invert(1) hue-rotate(200deg) brightness(.82) contrast(.92) saturate(.55)}
-.tiles-dark .leaflet-tile-pane{filter:brightness(1.15) contrast(1.05)}   /* tiles já escuros (CARTO, no APK) */
+.leaflet-container{background:#0b0f16;font-family:var(--ui)}
+/* Mapa base: o filtro vem de CONFIG.MAP (sem inversão de cores). */
+.leaflet-tile-pane{filter:var(--tile-filter,none)}
+/* Rota e linha até o portal: contorno escuro + brilho para destacar sobre as ruas */
+.route-line{filter:drop-shadow(0 0 1.5px rgba(0,0,0,.95)) drop-shadow(0 0 5px rgba(95,227,255,.75))}
+.portal-line{filter:drop-shadow(0 0 1.5px rgba(0,0,0,.95))}
+.me-dot{filter:drop-shadow(0 0 6px rgba(63,169,255,.95))}
+/* Aviso dentro do mapa (sem internet / servidor fora do ar) */
+.map-notice{position:absolute;left:8px;right:8px;top:8px;z-index:650;display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,211,107,.6);border-radius:4px;background:rgba(4,12,26,.92);color:var(--text);font-size:13px;line-height:1.35}
+.map-notice .ic{flex:none;width:18px;height:18px;color:var(--gold)}
+.map-notice span{flex:1}
+.map-notice .btn{flex:none;min-height:40px;padding:6px 10px;font-size:13px}
 .warn.ok{border-color:rgba(95,227,154,.55);background:rgba(95,227,154,.06)}
 .warn.ok .ic{color:var(--green)}
 .leaflet-control-attribution{background:rgba(2,6,14,.82)!important;color:var(--muted)!important;font-size:12px!important}
@@ -755,6 +764,30 @@ const CONFIG = {
     STALE_FIX_MS: 30000,    // sem leitura há 30 s → reinicia o watchPosition
     MIN_SAVE_M: 30,         // abaixo disso, oferece descartar ao finalizar
     ROUTE_MAX_POINTS: 600,  // pontos guardados por rota finalizada (economiza espaço)
+  },
+
+  // Mapa base (Leaflet). Os provedores são tentados em ordem: se um falhar
+  // FAIL_LIMIT vezes seguidas sem carregar nenhum tile, o app passa para o próximo.
+  MAP: {
+    PROVIDERS: [
+      {
+        id: 'carto-dark', name: 'CARTO Dark Matter', dark: true,
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',   // {r} = @2x em telas de celular
+        subdomains: 'abcd', maxZoom: 20,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      },
+      {
+        id: 'osm', name: 'OpenStreetMap', dark: false,
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        subdomains: 'abc', maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      },
+    ],
+    FAIL_LIMIT: 4,
+    // Ajuste leve de cor (CSS filter). Escuro: clareia as ruas e puxa para o azul do Sistema,
+    // sem inverter. Claro (plano B): só tira um pouco do brilho para não ofuscar.
+    DARK_FILTER: 'brightness(1.85) contrast(1.25) sepia(.2) hue-rotate(172deg) saturate(1.6)',
+    LIGHT_FILTER: 'brightness(.9) saturate(.85)',
   },
 
   // Portais (Gates) — aba Dungeon, seção 13
@@ -2200,6 +2233,11 @@ document.addEventListener('click', async ev => {
       gpsLive.autoPause = !gpsLive.autoPause;
       if (!gpsLive.autoPause && gpsLive.status === 'autopaused') { gpsLive.status = 'running'; gpsLive.resumeAt = Date.now(); gpsLive.lastMovedAt = Date.now(); }
       saveLive(); refreshControls(); break;
+    case 'gps-map-retry':
+      mapProviderIdx = 0;
+      toast('Recarregando o mapa…');
+      render();
+      break;
     case 'gps-recenter':
       mapFollow = true; el.classList.add('hidden'); updateLiveMarker(); break;
     case 'gps-open':
@@ -3007,38 +3045,98 @@ function renderActivityDetail(id) {
   </section>`;
 }
 
-/* ---------- mapas (Leaflet + OpenStreetMap) ---------- */
+/* ---------- mapas (Leaflet) ----------
+   Todos os mapas do app (Dungeon ao vivo, detalhe da atividade e portais)
+   passam por makeMap(). O mapa base vem de CONFIG.MAP.PROVIDERS, com
+   troca automática para o próximo provedor se o atual não carregar. */
+let mapProviderIdx = 0;            // provedor em uso nesta sessão (sobe quando um falha)
+window.__mapDiag = { provider: null, loads: 0, errors: 0, lastError: null };   // para depurar no chrome://inspect
+
 function makeMap(el) {
   if (!el) return null;
   if (!window.L) {
-    el.innerHTML = '<div class="map-off">Mapa indisponível agora (sem internet ou o Leaflet não carregou).<br>O GPS e a distância continuam funcionando.</div>';
+    el.innerHTML = '<div class="map-off">Mapa indisponível agora (o Leaflet não carregou).<br>O GPS, a distância e o tempo continuam funcionando.</div>';
     return null;
   }
   const m = L.map(el, { zoomControl: false, attributionControl: true });
-  if (IS_NATIVE) {
-    // APK: tiles escuros da CARTO (dados do OpenStreetMap), já no tema e aceitos fora do navegador
-    el.classList.add('tiles-dark');
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19, subdomains: 'abcd',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(m);
-  } else {
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(m);
-  }
+  addBaseLayer(m, el, mapProviderIdx);
   setTimeout(() => { try { m.invalidateSize(); } catch (e) { /* mapa já removido */ } }, 150);
   return m;
 }
+
+function addBaseLayer(m, el, idx) {
+  const list = CONFIG.MAP.PROVIDERS;
+  if (idx >= list.length) { showMapNotice(el, 'fail'); return; }
+  const pv = list[idx];
+  el.style.setProperty('--tile-filter', pv.dark ? CONFIG.MAP.DARK_FILTER : CONFIG.MAP.LIGHT_FILTER);
+  el.dataset.provider = pv.id;
+  const layer = L.tileLayer(pv.url, {
+    subdomains: pv.subdomains || 'abc', maxZoom: pv.maxZoom || 19, attribution: pv.attribution,
+  });
+  let errorsInRow = 0, loads = 0, gaveUp = false;
+  layer.on('tileload', () => {
+    errorsInRow = 0; loads++;
+    window.__mapDiag.loads++; window.__mapDiag.provider = pv.id;
+    hideMapNotice(el);
+  });
+  layer.on('tileerror', e => {
+    errorsInRow++;
+    window.__mapDiag.errors++;
+    window.__mapDiag.lastError = { provider: pv.id, src: e && e.tile ? e.tile.src : null, at: new Date().toISOString() };
+    console.warn('[SISTEMA] mapa: tile com erro', pv.id, e && e.tile ? e.tile.src : '');
+    if (gaveUp || errorsInRow < CONFIG.MAP.FAIL_LIMIT) return;
+    if (loads > 0 || navigator.onLine === false) {
+      // já funcionou antes (ou o aparelho está offline): é a internet, não o provedor
+      showMapNotice(el, 'offline');
+      return;
+    }
+    gaveUp = true;
+    try { m.removeLayer(layer); } catch (err) { /* ignora */ }
+    const next = idx + 1;
+    const first = next > mapProviderIdx;
+    if (first) mapProviderIdx = next;           // os próximos mapas já abrem no plano B
+    console.warn('[SISTEMA] mapa: trocando de provedor', pv.id, '→', list[next] ? list[next].id : 'nenhum');
+    if (next < list.length) {
+      if (first) toast(`Mapa: ${pv.name} indisponível. Usando ${list[next].name}.`, 'gold');
+      addBaseLayer(m, el, next);
+    } else showMapNotice(el, 'fail');
+  });
+  layer.addTo(m);
+  if (navigator.onLine === false) showMapNotice(el, 'offline');
+}
+
+// Faixa de aviso dentro do mapa. A rota, os marcadores e o GPS continuam funcionando.
+function showMapNotice(el, kind) {
+  if (!el || !el.isConnected) return;
+  let n = el.querySelector('.map-notice');
+  if (!n) { n = document.createElement('div'); n.className = 'map-notice'; el.appendChild(n); }
+  if (n.dataset.kind === kind) return;
+  n.dataset.kind = kind;
+  n.innerHTML = kind === 'offline'
+    ? `${icon('alert')}<span><b>Sem internet:</b> as ruas não carregam agora. GPS, distância e tempo continuam funcionando.</span>`
+    : `${icon('alert')}<span><b>Mapa indisponível:</b> não consegui carregar as ruas (servidor fora do ar ou bloqueado). GPS, distância e tempo continuam.</span>
+       <button class="btn" data-act="gps-map-retry">Tentar de novo</button>`;
+}
+function hideMapNotice(el) {
+  const n = el && el.querySelector('.map-notice');
+  if (n && n.dataset.kind === 'offline') n.remove();
+}
+// Internet voltou: recarrega os mapas que estavam com aviso
+window.addEventListener('online', () => {
+  if (!document.querySelector('.map-notice')) return;
+  mapProviderIdx = 0;
+  render();
+});
+
 const routeLatLngs = segs => segs.filter(s => s.length).map(s => s.map(p => [p[0], p[1]]));
 
 function mountLiveMap() {
   if (liveMap) { try { liveMap.remove(); } catch (e) { /* ignora */ } liveMap = null; }
   liveMap = makeMap(document.getElementById('live-map'));
   if (!liveMap) return;
-  liveLine = L.polyline(routeLatLngs(gpsLive.segments), { color: '#5fe3ff', weight: 5, opacity: 0.95 }).addTo(liveMap);
+  liveLine = L.polyline(routeLatLngs(gpsLive.segments), { color: '#5fe3ff', weight: 5, opacity: 0.95, className: 'route-line' }).addTo(liveMap);
   liveAcc = L.circle([0, 0], { radius: 1, color: '#3fa9ff', weight: 1, fillOpacity: 0.12 });
-  liveMarker = L.circleMarker([0, 0], { radius: 8, color: '#fff', weight: 2, fillColor: '#3fa9ff', fillOpacity: 1 });
+  liveMarker = L.circleMarker([0, 0], { radius: 8, color: '#fff', weight: 2.5, fillColor: '#3fa9ff', fillOpacity: 1, className: 'me-dot' });
   const lp = lastPoint();
   const start = gpsLastFix ? [gpsLastFix.lat, gpsLastFix.lng] : (lp ? [lp[0], lp[1]] : null);
   if (start) liveMap.setView(start, 17);
@@ -3079,7 +3177,7 @@ function mountRouteMap(id) {
   if (!segs.length) { el.innerHTML = '<div class="map-off">Rota não disponível.</div>'; return; }
   routeMap = makeMap(el);
   if (!routeMap) return;
-  const line = L.polyline(segs, { color: '#5fe3ff', weight: 5 }).addTo(routeMap);
+  const line = L.polyline(segs, { color: '#5fe3ff', weight: 5, className: 'route-line' }).addTo(routeMap);
   const lastSeg = segs[segs.length - 1];
   L.circleMarker(segs[0][0], { radius: 7, color: '#fff', weight: 2, fillColor: '#5fe39a', fillOpacity: 1 }).addTo(routeMap).bindTooltip('Início');
   L.circleMarker(lastSeg[lastSeg.length - 1], { radius: 7, color: '#fff', weight: 2, fillColor: '#ff5d78', fillOpacity: 1 }).addTo(routeMap).bindTooltip('Fim');
@@ -4100,7 +4198,7 @@ function mountPortalMap() {
   if (!portalMap) return;
   const ps = state.portals, list = activePortals();
   const me = DEV.active && DEV.pos ? DEV.pos : (list.length ? ps.origin : (gpsLastFix ? [gpsLastFix.lat, gpsLastFix.lng] : DEV_DEFAULT_POS));
-  const meMk = L.circleMarker(me, { radius: 8, color: '#fff', weight: 2, fillColor: '#3fa9ff', fillOpacity: 1 }).addTo(portalMap).bindTooltip('Você');
+  const meMk = L.circleMarker(me, { radius: 8, color: '#fff', weight: 2.5, fillColor: '#3fa9ff', fillOpacity: 1, className: 'me-dot' }).addTo(portalMap).bindTooltip('Você');
   const pts = [me];
   if (list.length && ps.origin) {
     L.circle(ps.origin, { radius: CONFIG.PORTAL.DIST_MAX_M(state.player.level), color: '#3fa9ff', weight: 1, dashArray: '4 6', fill: false, opacity: 0.5 }).addTo(portalMap);
@@ -4145,7 +4243,7 @@ function mountLiveExtras() {
   if (p) {
     livePortalMarker = L.marker([p.lat, p.lng], { icon: portalIcon(p, p.status !== 'active'), keyboard: false }).addTo(liveMap);
     if (p.status === 'active') {
-      livePortalLine = L.polyline([], { color: portalColor(p), weight: 3, dashArray: '6 8', opacity: 0.9 }).addTo(liveMap);
+      livePortalLine = L.polyline([], { color: portalColor(p), weight: 3.5, dashArray: '6 8', opacity: 0.95, className: 'portal-line' }).addTo(liveMap);
     }
   }
   liveMap.on('click', e => { if (DEV.active && gpsLive) devWalkTo([e.latlng.lat, e.latlng.lng]); });

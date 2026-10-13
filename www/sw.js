@@ -3,7 +3,7 @@
 // No APK (Capacitor) ele não é usado. Ele guarda o app em cache para abrir offline.
 // Estratégia: tenta a rede primeiro; sem internet, usa o cache.
 
-const CACHE = 'sistema-v5';   // mude o número quando atualizar o app
+const CACHE = 'sistema-v6';   // mude o número quando atualizar o app
 
 self.addEventListener('install', e => {
   e.waitUntil(
