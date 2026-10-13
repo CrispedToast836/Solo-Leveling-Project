@@ -58,6 +58,9 @@
     <!-- Android 13+: permissão para mostrar a notificação fixa da Dungeon -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Vibração (missões, chegada no portal, LEVEL UP) -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- Backup em Documentos no Android 10 ou menos (11+ não precisa) -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
 

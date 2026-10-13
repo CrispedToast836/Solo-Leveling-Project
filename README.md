@@ -13,6 +13,9 @@ O mesmo código roda de dois jeitos:
 - **Atributos** Força, Agilidade, Resistência e Disciplina (gráfico radar).
 - **Dungeon (GPS)**: corrida/caminhada com mapa, ritmo, pausa automática, parciais por km e recordes.
 - **Histórico** com calendário, registro manual e backup (exportar/importar).
+- **Portais (Gates)**: na aba Dungeon, "Detectar portais" abre 1 a 3 portais em praças, parques e quadras
+  perto de você (OpenStreetMap). Chegue antes do tempo acabar para limpar a dungeon. Ajustes em `CONFIG.PORTAL`.
+  Modo de teste escondido: toque 7 vezes no logo "SISTEMA" (ou abra com `?dev=1`) e mova sua posição pelo mapa.
 
 ## Estrutura do projeto
 | Caminho | O que é |

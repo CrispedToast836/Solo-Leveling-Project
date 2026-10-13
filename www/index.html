@@ -535,6 +535,88 @@ button.sig{min-height:44px;cursor:pointer;touch-action:manipulation}
 .back-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .back-row .btn{flex:none;padding:0 14px}
 
+/* ---------- Portais (Gates) ---------- */
+.gate-card{position:relative;margin-top:10px;padding:12px;border:1px solid rgba(var(--pc-rgb),.45);border-left:3px solid var(--pc);background:linear-gradient(90deg,rgba(var(--pc-rgb),.13),var(--inset) 62%);border-radius:4px;transition:box-shadow .25s}
+.gate-card.focus{box-shadow:0 0 0 2px var(--pc),0 0 18px rgba(var(--pc-rgb),.5)}
+.gate-card.red{animation:redPulse 2s ease-in-out infinite}
+@keyframes redPulse{50%{box-shadow:0 0 20px rgba(255,77,94,.5)}}
+.gc-head{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0;background:none;border:0;text-align:left;cursor:pointer;color:var(--text);touch-action:manipulation}
+.gc-badge{position:relative;flex:none;width:46px;height:46px;display:grid;place-items:center}
+.gc-badge svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.gc-badge polygon{fill:rgba(var(--pc-rgb),.2);stroke:var(--pc);stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(var(--pc-rgb),.8))}
+.gc-badge b{position:relative;font-family:var(--tech);font-weight:900;font-size:19px;color:#fff;text-shadow:0 0 8px var(--pc)}
+.gc-badge.big{width:66px;height:66px}
+.gc-badge.big b{font-size:28px}
+.gc-title{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gc-title b{font-size:17px;line-height:1.2;color:#fff}
+.gc-title .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc-xp{flex:none;font-family:var(--tech);font-size:13px;font-weight:700;color:var(--gold);padding:4px 8px;border:1px solid rgba(255,211,107,.45);border-radius:3px;white-space:nowrap}
+.gc-stats{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:15px;color:var(--text)}
+.gc-stats span{display:inline-flex;align-items:center;gap:5px}
+.gc-stats em{font-style:normal;color:var(--muted);font-size:13px}
+.gc-stats .ic{width:16px;height:16px;color:var(--pc)}
+.gc-src{display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-size:13px;line-height:1.35;color:var(--gold)}
+.gc-src .ic{width:16px;height:16px;flex:none;margin-top:1px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.scan-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
+.gate-row{display:flex;justify-content:center;gap:12px;margin:16px 0 6px}
+.gate-row .gc-badge{animation:grow .6s var(--ease) both}
+.gate-row .gc-badge:nth-child(2){animation-delay:.12s}
+.gate-row .gc-badge:nth-child(3){animation-delay:.24s}
+
+/* marcador do portal no mapa (anel girando + núcleo pulsando) */
+.gate-mk-wrap{background:none!important;border:0!important}
+.gate-mk{position:relative;width:46px;height:46px;display:grid;place-items:center}
+.gate-mk i{position:absolute;border-radius:50%}
+.gate-mk .r1{inset:0;border:3px dashed var(--pc);box-shadow:0 0 12px var(--pc),inset 0 0 10px var(--pc);animation:spin 5s linear infinite}
+.gate-mk .r2{inset:9px;background:radial-gradient(circle,#fff 0,var(--pc) 42%,rgba(0,0,0,.55) 78%);animation:gatePulse 1.5s ease-in-out infinite}
+.gate-mk b{position:relative;font-family:var(--tech);font-weight:900;font-size:13px;color:#fff;text-shadow:0 0 3px #000,0 0 6px #000}
+.gate-mk.red .r1{border-style:solid;border-width:2px;animation-duration:2.5s}
+.gate-mk.done .r1,.gate-mk.done .r2{animation:none;filter:grayscale(.85);opacity:.55}
+@keyframes gatePulse{50%{transform:scale(.78);opacity:.75}}
+
+/* HUD do portal durante a Dungeon */
+.gate-hud{margin-top:12px;padding:12px;border:1px solid rgba(var(--pc-rgb),.65);border-radius:4px;background:linear-gradient(180deg,rgba(var(--pc-rgb),.15),var(--inset));box-shadow:0 0 16px rgba(var(--pc-rgb),.25)}
+.gh-head{display:flex;align-items:center;gap:10px}
+.gh-state{flex:none;max-width:42%;font-family:var(--tech);font-size:12px;letter-spacing:.06em;line-height:1.3;text-align:center;padding:4px 8px;border-radius:3px;border:1px solid var(--pc);color:var(--pc)}
+.gh-grid{display:grid;grid-template-columns:100px 1fr 1fr;gap:8px;margin-top:10px}
+.gh-compass{grid-row:span 2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.gh-dial{position:relative;width:92px;height:92px;border-radius:50%;border:2px solid rgba(var(--pc-rgb),.75);background:radial-gradient(circle,rgba(var(--pc-rgb),.22),rgba(2,8,20,.92) 70%);box-shadow:0 0 14px rgba(var(--pc-rgb),.45)}
+.gh-dial::before{content:'N';position:absolute;top:2px;left:50%;transform:translateX(-50%);font-family:var(--tech);font-size:12px;color:var(--muted)}
+.gh-dial svg{position:absolute;inset:10px;width:68px;height:68px;transition:transform .35s var(--ease)}
+.gh-dial path{fill:var(--pc);stroke:#fff;stroke-width:2;stroke-linejoin:round;filter:drop-shadow(0 0 6px var(--pc))}
+.gh-dir{font-family:var(--tech);font-size:12px;color:var(--muted);text-align:center;line-height:1.3}
+.gh-cell{display:flex;flex-direction:column;gap:2px;min-width:0;padding:8px;border:1px solid var(--line-soft);border-radius:4px;background:rgba(2,8,20,.6)}
+.gh-cell .k{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.gh-cell .v{font-family:var(--tech);font-weight:700;font-size:clamp(20px,6.4vw,26px);color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gh-cell .u{font-size:12px;color:var(--muted)}
+.gh-cell.wide{grid-column:span 2}
+.gh-cell.ok .v{color:var(--green)}
+.gh-cell.tight .v{color:var(--gold)}
+.gh-cell.hard .v{color:var(--danger)}
+.gh-cell.urgent .v{color:var(--danger);animation:blinkSoft 1s ease-in-out infinite}
+.gate-hud .bar>i{background:var(--pc);box-shadow:0 0 8px var(--pc)}
+.gh-result{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;padding:10px;border:1px solid currentColor;border-radius:4px;font-family:var(--tech);font-size:13px;letter-spacing:.08em;text-align:center}
+.gh-result.ok{color:var(--green);background:rgba(95,227,154,.07)}
+.gh-result.bad{color:var(--muted)}
+.gate-hud.closed{filter:saturate(.35)}
+
+/* resumo, lista e histórico */
+.gate-result{display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px 12px;border:1px solid rgba(var(--pc-rgb),.5);border-radius:4px;background:rgba(var(--pc-rgb),.08)}
+.gate-result.closed{filter:saturate(.4)}
+.p-chip{display:inline-block;margin-top:4px;font-family:var(--tech);font-size:12px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid var(--pc);color:var(--pc)}
+.p-chip.closed{opacity:.6}
+.rank-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
+.rank-cell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border:1px solid rgba(var(--pc-rgb),.45);border-radius:4px;background:rgba(var(--pc-rgb),.08)}
+.rank-cell b{font-family:var(--tech);font-size:15px;color:var(--pc)}
+.rank-cell span{font-family:var(--tech);font-size:17px;color:#fff}
+.rank-cell.zero{opacity:.4}
+
+/* modo de teste */
+.panel.dev{border-color:rgba(255,211,107,.65)}
+.dev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.dev-grid .chip{font-size:13px}
+
 /* Acessibilidade: sem animações para quem prefere menos movimento */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition:none!important}
@@ -576,6 +658,7 @@ button.sig{min-height:44px;cursor:pointer;touch-action:manipulation}
     10. Eventos, PWA e inicialização
     11. Dungeon ....... rastreamento por GPS (Leaflet + OpenStreetMap)
     12. App nativo .... Android/Capacitor: GPS com tela bloqueada, permissões, voltar, backup
+    13. Portais ....... Gates: portais em pontos da cidade, contagem, bússola, modo de teste
    ============================================================== */
 
 
@@ -673,6 +756,47 @@ const CONFIG = {
     MIN_SAVE_M: 30,         // abaixo disso, oferece descartar ao finalizar
     ROUTE_MAX_POINTS: 600,  // pontos guardados por rota finalizada (economiza espaço)
   },
+
+  // Portais (Gates) — aba Dungeon, seção 13
+  PORTAL: {
+    // Anel onde os portais aparecem (distância em linha reta), cresce com o nível
+    DIST_MIN_M: L => Math.min(2500, 300 + 40 * (L - 1)),     // nível 1: 300 m
+    DIST_MAX_M: L => Math.min(6000, 1000 + 150 * (L - 1)),   // nível 1: 1 km
+    COUNT_WEIGHTS: [0.2, 0.4, 0.4],  // chance de aparecerem 1, 2 ou 3 portais
+    MIN_SPACING_M: 150,              // distância mínima entre dois portais
+    ROUTE_FACTOR: 1.3,               // linha reta → distância a pé (ruas não são retas)
+
+    // Tempo limite = km a pé × seu ritmo × folga + START_BUFFER_MIN
+    DEFAULT_PACE_MIN: { walk: 12, run: 7.5 },   // min/km se ainda não houver histórico
+    PACE_HISTORY: 8,                 // últimas N dungeons usadas na média do seu ritmo
+    PACE_MIN_ACTIVITY_M: 400,        // ignora dungeons muito curtas na média
+    PACE_CLAMP_MIN: [4.5, 16],       // limites do ritmo de referência (min/km)
+    SLACK_RANGE: [1.15, 1.7],        // folga sorteada (menos folga = rank mais alto)
+    START_BUFFER_MIN: 1,             // minuto extra para o GPS pegar sinal
+    LIMIT_MIN_MIN: 5,                // tempo limite mínimo (min)
+
+    // Rank pela nota = km a pé ÷ folga
+    RANK_SCORE: [['E', 0.6], ['D', 1.2], ['C', 2], ['B', 3.2], ['A', 5], ['S', Infinity]],
+    XP_RANK: { E: 20, D: 35, C: 55, B: 80, A: 110, S: 150 },
+    XP_PER_KM: 10,                   // + XP por km a pé
+    CONSOLATION_RATE: 0.3,           // portal fechou: 30% do XP × fração do caminho feita
+    STAT_REWARD: { agi: 1, end: 1 }, // atributos ao limpar um portal
+
+    // Portal Vermelho (raro): mais longe, menos folga, +1 rank, XP em dobro
+    RED: { CHANCE: 0.10, DIST_MULT: 1.25, SLACK: 1.05, RANK_BONUS: 1, XP_MULT: 2, COLOR: '#ff4d5e' },
+
+    // Chegada: raio = 30 m + metade da precisão do GPS (máx. 50 m)
+    ARRIVE_BASE_M: 30, ARRIVE_ACC_FACTOR: 0.5, ARRIVE_MAX_M: 50,
+    MIN_START_M: 100,                // portal a menos disso no início da contagem é anulado
+
+    EXPIRE_MIN: 45,                  // portais somem se você não entrar
+    COOLDOWN_MIN: 20,                // espera entre uma varredura e outra
+    REROLLS: 5,                      // "Sortear outro" por varredura
+    NIGHT_START_H: 19, NIGHT_END_H: 6,   // aviso de noite
+
+    OVERPASS_URLS: ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'],
+    OVERPASS_TIMEOUT_MS: 15000,
+  },
 };
 
 // Textos fixos
@@ -761,6 +885,8 @@ function defaultState() {
     days: {},
     weeks: {},
     activities: [],          // dungeons (GPS) finalizadas — as rotas ficam em ROUTES_KEY
+    portals: { list: [], origin: null, type: 'walk', detectedAt: 0, expiresAt: 0, nextDetectAt: 0, rerolls: 0, offline: false, pool: [], seen: [] },
+    portalStats: { cleared: 0, closed: 0, red: 0, byRank: { E: 0, D: 0, C: 0, B: 0, A: 0, S: 0 }, farthestM: 0, bestRank: null, fastestMs: null },
     lastProcessed: null,
   };
 }
@@ -775,6 +901,9 @@ function migrate(s) {
     streak:   { ...d.streak,   ...(s.streak   || {}) },
     settings: { ...d.settings, ...(s.settings || {}) },
     days: s.days || {}, weeks: s.weeks || {}, activities: s.activities || [],
+    portals: { ...d.portals, ...(s.portals || {}) },
+    portalStats: { ...d.portalStats, ...(s.portalStats || {}),
+                   byRank: { ...d.portalStats.byRank, ...((s.portalStats || {}).byRank || {}) } },
   };
 }
 
@@ -1643,7 +1772,8 @@ function renderHistory() {
       <div class="rec"><span class="k">Academia</span><span class="v">${gymTotal}</span></div>
     </div>
     <p class="info">XP total: <b>${state.player.totalXp}</b> · Recorde de sequência: <b>${Math.max(state.streak.best, computeStreak())}</b> dias</p>
-  </section>`;
+  </section>
+  ${renderPortalStatsPanel()}`;
 }
 
 function renderDayDetail(k) {
@@ -1845,7 +1975,10 @@ function flushBig() {
   const it = bigQueue.shift();
   bigShowing = true;
   const done = () => { bigShowing = false; setTimeout(flushBig, 250); };
-  if (it.type === 'rank') showRankUp(it, done); else showLevelUp(it, done);
+  if (it.type === 'rank') showRankUp(it, done);
+  else if (it.type === 'gates') showPortalsDetected(it, done);
+  else if (it.type === 'clear') showPortalClear(it, done);
+  else showLevelUp(it, done);
 }
 
 // Tela cheia curta: fecha com um toque (depois de minMs) ou sozinha (autoMs)
@@ -2042,6 +2175,18 @@ document.addEventListener('click', async ev => {
     case 'import': document.getElementById('import-file').click(); break;
 
     /* ----- Dungeon (GPS) ----- */
+    /* ----- Portais (seção 13) ----- */
+    case 'gps-portal-detect': await detectPortals(); break;
+    case 'gps-portal-enter': await enterPortal(id); break;
+    case 'gps-portal-reroll': rerollPortal(id); break;
+    case 'gps-portal-focus': focusPortal(id); break;
+    case 'gps-dev-speed': DEV.speed = Number(el.dataset.v); render(); break;
+    case 'gps-dev-goto': devGotoPortal(); break;
+    case 'gps-dev-close': devClosePortal(); break;
+    case 'gps-dev-nocd': DEV.noCooldown = !DEV.noCooldown; render(); break;
+    case 'gps-dev-red': DEV.forceRed = !DEV.forceRed; render(); break;
+    case 'gps-dev-off': devToggle(false); break;
+
     case 'gps-type': gpsType = el.dataset.type; render(); break;
     case 'gps-autopause':
       state.settings.autoPause = state.settings.autoPause === false;
@@ -2266,6 +2411,7 @@ function onPosition(pos) {
   const g = gpsLive;
   if (!g) return;
   updateLiveMarker();
+  portalTick(now);               // Portais: contagem e prazo também a cada ponto (app em segundo plano)
   if (g.status === 'paused') { updateLiveUI(); return; }
   if (c.accuracy > CONFIG.GPS.MAX_ACCURACY) { g.rejected++; updateLiveUI(); return; }
 
@@ -2277,6 +2423,7 @@ function onPosition(pos) {
   if (!g.anchor) {               // início de trecho: só marca a posição
     g.anchor = [p[0], p[1], now];
     addRoutePoint(p, now);
+    portalOnFix(p[0], p[1], c.accuracy, now);
     updateLiveUI(); updateLiveMap();
     return;
   }
@@ -2299,7 +2446,7 @@ function onPosition(pos) {
   }
   g.jumpStreak = 0;
 
-  if (d < Math.max(CONFIG.GPS.MIN_STEP, c.accuracy * 0.5)) { updateLiveUI(); return; } // parado / ruído
+  if (d < Math.max(CONFIG.GPS.MIN_STEP, c.accuracy * 0.5)) { portalOnFix(p[0], p[1], c.accuracy, now); updateLiveUI(); return; } // parado / ruído
 
   if (g.status === 'autopaused') {               // voltou a se mexer
     g.status = 'running'; g.resumeAt = now;
@@ -2310,6 +2457,7 @@ function onPosition(pos) {
   g.anchor = [p[0], p[1], now];
   g.lastMovedAt = now;
   addRoutePoint(p, now);
+  portalOnFix(p[0], p[1], c.accuracy, now);
   updateLiveUI(); updateLiveMap();
 }
 
@@ -2334,6 +2482,12 @@ function onGeoError(err) {
 
 function startWatch() {
   stopWatch();
+  if (DEV.active) {                      // modo de teste (seção 13): posição simulada
+    gpsWatchStartedAt = Date.now();
+    gpsWatchId = 'dev';
+    devStartWalker();
+    return;
+  }
   if (IS_NATIVE) {                       // APK: plugin de GPS em segundo plano (seção 12)
     gpsWatchStartedAt = Date.now();
     gpsWatchId = 'native';
@@ -2347,6 +2501,8 @@ function startWatch() {
   } catch (e) { showGpsProblem('unsupported'); }
 }
 function stopWatch() {
+  devStopWalker();
+  if (gpsWatchId === 'dev') { gpsWatchId = null; return; }
   if (IS_NATIVE) { stopNativeWatch(); gpsWatchId = null; return; }
   if (gpsWatchId !== null) { try { navigator.geolocation.clearWatch(gpsWatchId); } catch (e) { /* ignora */ } }
   gpsWatchId = null;
@@ -2366,6 +2522,7 @@ function gpsTick() {
   if (g.status !== 'paused' && !document.hidden && gpsWatchId !== null &&
       now - lastT > CONFIG.GPS.STALE_FIX_MS && now - gpsWatchStartedAt > CONFIG.GPS.STALE_FIX_MS) startWatch();
   if (now - (g.savedAt || 0) > CONFIG.GPS.SAVE_EVERY_MS) saveLive();
+  portalTick(now);
   if (IS_NATIVE) maybeUpdateNativeNotif();
   updateLiveUI();
 }
@@ -2458,16 +2615,18 @@ function gpsSupportProblem() {
   return null;
 }
 
-async function startDungeon() {
-  const prob = gpsSupportProblem();
+// opts.portal: entra num Portal (seção 13) — é a mesma Dungeon, com o portal como destino
+async function startDungeon(opts = {}) {
+  const prob = DEV.active ? null : gpsSupportProblem();
   if (prob) { showGpsProblem(prob); return; }
-  if (IS_NATIVE && !(await ensureNativePermissions())) return;   // pede localização + notificação com explicação
+  if (IS_NATIVE && !DEV.active && !(await ensureNativePermissions())) return;   // pede localização + notificação com explicação
   gpsLive = newLive(gpsType || defaultGpsType());
+  if (opts.portal) attachPortal(opts.portal);
   gpsLastFix = null; gpsWarnedNoSignal = false; mapFollow = true;
   saveLive(); startWatch(); requestWakeLock(); startTicker();
   currentTab = 'gps'; gpsView = 'home';
   render();
-  toast('Dungeon aberta. Procurando sinal GPS…', 'gold');
+  toast(opts.portal ? `Portal aberto: ${portalTitle(opts.portal)}. Procurando sinal GPS…` : 'Dungeon aberta. Procurando sinal GPS…', 'gold');
 }
 
 function pauseDungeon() {
@@ -2504,6 +2663,7 @@ async function finishDungeon(skipConfirm = false) {
 // Transforma a atividade ao vivo num registro permanente + XP
 function saveFinishedActivity() {
   const g = gpsLive, now = Date.now();
+  const portalSummary = portalFinalize(g, now);   // fecha o portal se ainda estiver aberto (XP menor, sem penalidade)
   const cum = g.splits;
   const lastCum = cum.length ? cum[cum.length - 1] : 0;
   const restM = g.distance - cum.length * 1000;
@@ -2513,6 +2673,7 @@ function saveFinishedActivity() {
     splits: cum.map((c, i) => c - (i ? cum[i - 1] : 0)),
     rest: restM >= 50 ? { m: Math.round(restM), ms: Math.round(g.movingMs - lastCum) } : null,
     xp: 0,
+    ...(portalSummary ? { portal: portalSummary } : {}),
   };
   const routes = loadRoutes();
   routes[act.id] = simplifyRoute(g.segments, g.distance);
@@ -2549,6 +2710,7 @@ function checkUnfinishedDungeon() {
     <p>Encontrei uma atividade de <b>${fmtKm(g.distance)} km</b> em <b>${fmtDuration(g.movingMs)}</b>,
        iniciada em ${new Date(g.startedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}.</p>
     <p class="small">O tempo em que o app ficou fechado não foi contado.</p>
+    ${portalResumeNote(g)}
     <button class="btn primary block" data-m="resume">▶ Retomar</button>
     <button class="btn block" data-m="finish">■ Finalizar e salvar</button>
     <button class="btn ghost block" data-m="discard">Descartar</button>`);
@@ -2654,6 +2816,8 @@ function renderGpsHome() {
     ${screenTip}
     <div class="note">${icon('run')}<span>Sessão longa desta semana: <b>${esc(currentWeek().targets.longLabel)}</b> — ${esc(currentWeek().targets.longDesc)}.</span></div>
   </section>
+  ${renderPortalPanel()}
+  ${DEV.active ? renderDevPanel() : ''}
   ${renderRecords()}
   ${renderActivityList()}`;
 }
@@ -2693,7 +2857,7 @@ function renderActivityList() {
     <button class="act-item" data-act="gps-open" data-id="${x.id}">
       <span class="act-ic">${icon(ACT_ICON[x.type])}</span>
       <span class="act-main"><b>${fmtKm(x.distance)} km</b><br>
-        <span class="small">${DOW_SHORT[weekday(x.date)]} ${shortDate(x.date)} · ${ACTIVITIES[x.type].label}</span></span>
+        <span class="small">${DOW_SHORT[weekday(x.date)]} ${shortDate(x.date)} · ${ACTIVITIES[x.type].label}</span>${x.portal ? '<br>' + portalChipHtml(x.portal) : ''}</span>
       <span class="act-side">${fmtDuration(x.movingMs)}<br>${fmtPace(x.distance >= 50 ? x.movingMs / x.distance * 1000 : null)} /km</span>
       ${icon('next')}
     </button>`).join('');
@@ -2734,6 +2898,7 @@ function renderLive() {
       <div class="tile"><span class="k">Ritmo atual</span><span class="v" id="gps-pace">--:--</span><span class="u">min/km</span></div>
       <div class="tile"><span class="k">Ritmo médio</span><span class="v" id="gps-avg">--:--</span><span class="u">min/km</span></div>
     </div>
+    ${gpsLive.portal ? renderPortalHud() : ''}
     <div class="gps-bar">
       <span class="sig off" id="gps-signal"></span>
       <span class="sig off" id="gps-wake"></span>
@@ -2744,7 +2909,8 @@ function renderLive() {
       <div class="map" id="live-map"></div>
       <button class="recenter hidden" id="gps-recenter" data-act="gps-recenter" aria-label="Centralizar no mapa">${icon('crosshair')}</button>
     </div>
-  </section>`;
+  </section>
+  ${DEV.active ? renderDevPanel() : ''}`;
 }
 
 // Ritmo dos últimos ~30 s do trecho atual (ms por km)
@@ -2795,6 +2961,7 @@ function updateLiveUI() {
     st.dataset.txt = txt;
     st.innerHTML = txt ? `<div class="status-banner">${icon(g.waiting && g.status === 'running' ? 'pin' : 'pause_auto')}${txt}</div>` : '';
   }
+  updatePortalHud(now);
 }
 
 function renderActivityDetail(id) {
@@ -2820,6 +2987,7 @@ function renderActivityDetail(id) {
       <div class="rec"><span class="k">Total</span><span class="v">${fmtDuration(x.elapsedMs)}</span></div>
     </div>
     <div class="xp-earned">${icon('spark')} +${x.xp} XP GANHOS</div>
+    ${x.portal ? portalResultHtml(x.portal) : ''}
     <div class="map-wrap"><div class="map small" id="route-map"></div></div>
   </section>
   <section class="panel">
@@ -2873,12 +3041,15 @@ function mountLiveMap() {
   liveMarker = L.circleMarker([0, 0], { radius: 8, color: '#fff', weight: 2, fillColor: '#3fa9ff', fillOpacity: 1 });
   const lp = lastPoint();
   const start = gpsLastFix ? [gpsLastFix.lat, gpsLastFix.lng] : (lp ? [lp[0], lp[1]] : null);
-  if (start) liveMap.setView(start, 17); else liveMap.setView([-14.2, -51.9], 4);
+  if (start) liveMap.setView(start, 17);
+  else if (gpsLive.portal) liveMap.setView([gpsLive.portal.lat, gpsLive.portal.lng], 15);
+  else liveMap.setView([-14.2, -51.9], 4);
   liveMap.on('dragstart', () => {
     mapFollow = false;
     const b = document.getElementById('gps-recenter');
     if (b) b.classList.remove('hidden');
   });
+  mountLiveExtras();             // portal + linha até ele + toque do modo de teste
   updateLiveMarker();
 }
 function updateLiveMap() {
@@ -2893,7 +3064,11 @@ function moveLiveMarker() {
   liveMarker.setLatLng(ll);
   liveAcc.setLatLng(ll).setRadius(gpsLastFix.acc);
   if (!liveMap.hasLayer(liveMarker)) { liveAcc.addTo(liveMap); liveMarker.addTo(liveMap); }
-  if (mapFollow) liveMap.setView(ll, Math.max(liveMap.getZoom() || 17, 16));
+  const both = livePortalUpdate(ll);   // com portal: o mapa mostra você e o portal
+  if (mapFollow) {
+    if (both) liveMap.fitBounds(both, { padding: [48, 48], maxZoom: 17, animate: false });
+    else liveMap.setView(ll, Math.max(liveMap.getZoom() || 17, 16));
+  }
 }
 
 function mountRouteMap(id) {
@@ -2908,7 +3083,13 @@ function mountRouteMap(id) {
   const lastSeg = segs[segs.length - 1];
   L.circleMarker(segs[0][0], { radius: 7, color: '#fff', weight: 2, fillColor: '#5fe39a', fillOpacity: 1 }).addTo(routeMap).bindTooltip('Início');
   L.circleMarker(lastSeg[lastSeg.length - 1], { radius: 7, color: '#fff', weight: 2, fillColor: '#ff5d78', fillOpacity: 1 }).addTo(routeMap).bindTooltip('Fim');
-  const fit = () => { try { routeMap.invalidateSize(); routeMap.fitBounds(line.getBounds(), { padding: [24, 24], maxZoom: 17 }); } catch (e) { /* ignora */ } };
+  const act = (state.activities || []).find(a => a.id === id);
+  const bounds = line.getBounds();
+  if (act && act.portal) {
+    L.marker([act.portal.lat, act.portal.lng], { icon: portalIcon(act.portal, act.portal.result !== 'cleared'), keyboard: false }).addTo(routeMap);
+    bounds.extend([act.portal.lat, act.portal.lng]);
+  }
+  const fit = () => { try { routeMap.invalidateSize(); routeMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 }); } catch (e) { /* ignora */ } };
   fit();
   setTimeout(fit, 200);
 }
@@ -2921,11 +3102,13 @@ function afterRenderGps() {
   if (currentTab !== 'gps' || gpsLive || gpsView !== 'detail') {
     if (routeMap) { try { routeMap.remove(); } catch (e) { /* ignora */ } routeMap = null; }
   }
+  if (currentTab !== 'gps' || gpsLive || gpsView === 'detail') unmountPortalMap();
   if (currentTab !== 'gps') return;
   // O mapa nunca pode derrubar o rastreamento: se algo falhar, mostra o aviso e segue
   try {
     if (gpsLive) mountLiveMap();
     else if (gpsView === 'detail' && gpsSel) mountRouteMap(gpsSel);
+    else mountPortalMap();
   } catch (e) {
     liveMap = null; routeMap = null;
     const el = document.getElementById(gpsLive ? 'live-map' : 'route-map');
@@ -2998,7 +3181,8 @@ function nativeNotifContent() {
     : g.status === 'autopaused' ? 'Auto-pausa — você está parado'
     : g.waiting ? 'Procurando sinal GPS…'
     : 'Rastreando — pode bloquear a tela';
-  return { title, msg, key: title + '|' + msg };
+  const pm = portalNotifText(g) || msg;      // com portal: "Portal C · faltam 800 m · 9 min"
+  return { title, msg: pm, key: title + '|' + pm };
 }
 
 // Liga o watcher do plugin. Também é usado para trocar o texto da notificação:
@@ -3184,6 +3368,901 @@ function setupNative() {
     App.addListener('resume', () => { checkGpsPermission(); if (gpsLive) updateLiveUI(); });
   }
 }
+
+
+/* ==============================================================
+   13. PORTAIS (Gates)
+   --------------------------------------------------------------
+   Fluxo:
+     1. "Detectar portais" → pega sua posição → busca na Overpass API
+        (OpenStreetMap) pontos públicos e caminháveis ao redor.
+     2. Sorteia de 1 a 3 portais (um por faixa de distância), calcula
+        rank, tempo limite e XP (tudo em CONFIG.PORTAL).
+     3. "Entrar no portal" → startDungeon({ portal }) → é uma Dungeon
+        normal (mesmo GPS, mesmos filtros) com o portal como destino.
+     4. Cada leitura do GPS passa por portalOnFix(): chegou perto →
+        "Dungeon limpa". O relógio (portalTick) fecha o portal no prazo.
+   Portais são BÔNUS: só dão XP. Nunca mexem em sequência, missões
+   ou penalidade.
+
+   Onde ficam os dados:
+     state.portals ........ portais detectados agora (lista, origem, cooldown)
+     state.portalStats .... contadores e recordes de portais
+     gpsLive.portal ....... portal ativo (salvo junto com a Dungeon em andamento)
+     activity.portal ...... resumo do portal na atividade finalizada
+   ============================================================== */
+const RANK_IDS = CONFIG.RANKS.map(r => r.id);
+const PORTAL_KIND_LABEL = {
+  park: 'Parque', playground: 'Playground', pitch: 'Quadra / campo', sports_centre: 'Centro esportivo',
+  fitness_station: 'Academia ao ar livre', garden: 'Jardim', recreation_ground: 'Área de lazer',
+  track: 'Pista', dog_park: 'Parcão', square: 'Praça', pedestrian: 'Rua de pedestres',
+  viewpoint: 'Mirante', artwork: 'Obra de arte', attraction: 'Ponto turístico', fountain: 'Fonte',
+  random: 'Ponto não verificado',
+};
+// Brusque (centro): posição inicial do modo de teste quando não há GPS
+const DEV_DEFAULT_POS = [-27.0977, -48.9175];
+
+let portalScanning = false;     // varredura em andamento
+let portalFlyPending = false;   // dar zoom nos portais depois da animação
+let portalFocusId = null;       // card destacado
+let portalMap = null;
+let livePortalMarker = null, livePortalLine = null;
+let overpassCache = { key: '', at: 0, list: [] };
+
+/* ---------- utilidades ---------- */
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const randIn = (a, b) => a + Math.random() * (b - a);
+function portalColor(p) {
+  if (p.red) return CONFIG.PORTAL.RED.COLOR;
+  return (CONFIG.RANKS.find(r => r.id === p.rank) || CONFIG.RANKS[0]).color;
+}
+const pcStyle = p => `--pc:${portalColor(p)};--pc-rgb:${hexToRgb(portalColor(p))}`;
+function fmtDist(m, dec = 1) {
+  if (m == null || !isFinite(m)) return '--';
+  if (m < 1000) return `${Math.max(0, Math.round(m / 10) * 10)} m`;
+  return `${(m / 1000).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec })} km`;
+}
+// Direção (graus, 0 = norte, sentido horário) de a para b
+function bearing(a, b) {
+  const r = Math.PI / 180;
+  const y = Math.sin((b[1] - a[1]) * r) * Math.cos(b[0] * r);
+  const x = Math.cos(a[0] * r) * Math.sin(b[0] * r) - Math.sin(a[0] * r) * Math.cos(b[0] * r) * Math.cos((b[1] - a[1]) * r);
+  return (Math.atan2(y, x) / r + 360) % 360;
+}
+const cardinal = deg => ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO'][Math.round(deg / 45) % 8];
+function offsetPoint(origin, distM, deg) {
+  const r = Math.PI / 180;
+  return [origin[0] + distM * Math.cos(deg * r) / 111320,
+          origin[1] + distM * Math.sin(deg * r) / (111320 * Math.cos(origin[0] * r))];
+}
+function isNight() {
+  const h = new Date().getHours();
+  return h >= CONFIG.PORTAL.NIGHT_START_H || h < CONFIG.PORTAL.NIGHT_END_H;
+}
+function activePortals() {
+  const ps = state.portals;
+  return ps.list.length && Date.now() < ps.expiresAt ? ps.list : [];
+}
+const arriveRadius = acc => clamp(CONFIG.PORTAL.ARRIVE_BASE_M + (acc || 0) * CONFIG.PORTAL.ARRIVE_ACC_FACTOR,
+  CONFIG.PORTAL.ARRIVE_BASE_M, CONFIG.PORTAL.ARRIVE_MAX_M);
+
+/* ---------- dificuldade ---------- */
+
+// Seu ritmo de referência: média das últimas dungeons do mesmo tipo (ou padrão)
+function portalRefPace(type) {
+  const P = CONFIG.PORTAL;
+  const acts = (state.activities || []).filter(a => a.distance >= P.PACE_MIN_ACTIVITY_M && a.movingMs > 0);
+  const same = acts.filter(a => a.type === type);
+  const pool = (same.length >= 2 ? same : acts).slice(-P.PACE_HISTORY);
+  let min, source = 'default';
+  if (pool.length) {
+    const dist = pool.reduce((s, a) => s + a.distance, 0), ms = pool.reduce((s, a) => s + a.movingMs, 0);
+    min = ms / dist * 1000 / 60000;
+    source = 'history';
+  } else min = P.DEFAULT_PACE_MIN[type] || P.DEFAULT_PACE_MIN.walk;
+  min = clamp(min, P.PACE_CLAMP_MIN[0], P.PACE_CLAMP_MIN[1]);
+  return { msPerKm: min * 60000, source, n: pool.length };
+}
+
+// Tempo limite = distância a pé × seu ritmo × folga + tempo para o GPS pegar sinal
+function portalLimitMs(straightM, paceMs, slack) {
+  const P = CONFIG.PORTAL;
+  const ms = straightM * P.ROUTE_FACTOR / 1000 * paceMs * slack + P.START_BUFFER_MIN * 60000;
+  return Math.max(P.LIMIT_MIN_MIN, Math.ceil(ms / 60000)) * 60000;
+}
+
+// Rank pela nota = km a pé ÷ folga (longe e apertado = rank alto)
+function rankFromScore(score) {
+  for (const [id, max] of CONFIG.PORTAL.RANK_SCORE) if (score < max) return id;
+  return 'S';
+}
+
+function buildPortal(c, origin, { type, pace, red }) {
+  const P = CONFIG.PORTAL;
+  const straightM = haversine(origin, [c.lat, c.lng]);
+  const slack = red ? P.RED.SLACK : randIn(P.SLACK_RANGE[0], P.SLACK_RANGE[1]);
+  const routeKm = straightM * P.ROUTE_FACTOR / 1000;
+  let rank = rankFromScore(routeKm / slack);
+  if (red) rank = RANK_IDS[Math.min(RANK_IDS.length - 1, RANK_IDS.indexOf(rank) + P.RED.RANK_BONUS)];
+  const xp = Math.round((P.XP_RANK[rank] + routeKm * P.XP_PER_KM) * (red ? P.RED.XP_MULT : 1));
+  return {
+    id: 'pt-' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36),
+    osmId: c.id || null, lat: +c.lat.toFixed(6), lng: +c.lng.toFixed(6),
+    name: c.name || null, kind: c.kind, source: c.source,
+    straightM: Math.round(straightM), slack: Math.round(slack * 100) / 100,
+    rank, red: !!red, xp, limitMs: portalLimitMs(straightM, pace.msPerKm, slack),
+    paceMs: Math.round(pace.msPerKm), paceSource: pace.source, type,
+  };
+}
+const portalTitle = p => p.red ? 'PORTAL VERMELHO' : `Portal rank ${p.rank}`;
+const portalPlace = p => p.name ? `${p.name} · ${PORTAL_KIND_LABEL[p.kind] || 'Local'}` : (PORTAL_KIND_LABEL[p.kind] || 'Local');
+
+/* ---------- onde os portais podem aparecer (Overpass / OpenStreetMap) ---------- */
+
+// Só lugares públicos e caminháveis. Rodovias, rios e áreas industriais nem entram na busca.
+function isSafePortalSpot(t) {
+  if (['private', 'no', 'customers', 'permit', 'delivery', 'military'].includes(t.access)) return false;
+  if (t.indoor === 'yes' || t.disused === 'yes' || t.abandoned === 'yes') return false;
+  if (t.leisure === 'sports_centre' && (t.building || t.fee === 'yes')) return false;  // ginásios/academias fechadas
+  if (t.leisure === 'track' && /motor|kart|horse|racing/.test(t.sport || '')) return false;
+  if (t.leisure === 'garden' && /residential|private/.test(t['garden:type'] || '')) return false;
+  if (t.landuse === 'industrial' || t.industrial) return false;
+  return true;
+}
+
+function parseOverpass(json, origin) {
+  const out = [];
+  for (const el of (json && json.elements) || []) {
+    const t = el.tags || {};
+    const lat = el.lat != null ? el.lat : (el.center && el.center.lat);
+    const lng = el.lon != null ? el.lon : (el.center && el.center.lon);
+    if (lat == null || lng == null || !isSafePortalSpot(t)) continue;
+    const kind = t.leisure || (t.place === 'square' ? 'square' : null) || (t.highway === 'pedestrian' ? 'pedestrian' : null) || t.tourism || t.amenity;
+    if (!PORTAL_KIND_LABEL[kind]) continue;
+    const c = { id: el.type[0] + el.id, lat: +lat.toFixed(6), lng: +lng.toFixed(6), name: (t.name || '').slice(0, 40) || null, kind, source: 'osm' };
+    c.d = haversine(origin, [c.lat, c.lng]);
+    // tira duplicados (ex.: quadra dentro de um parque)
+    if (out.some(o => haversine([o.lat, o.lng], [c.lat, c.lng]) < 25)) continue;
+    out.push(c);
+  }
+  return out.sort((a, b) => a.d - b.d);
+}
+
+async function fetchPortalCandidates(origin, radius) {
+  const key = `${origin[0].toFixed(3)},${origin[1].toFixed(3)},${Math.round(radius / 100)}`;
+  if (overpassCache.key === key && Date.now() - overpassCache.at < 30 * 60000) return overpassCache.list;
+  const A = `(around:${Math.round(radius)},${origin[0].toFixed(6)},${origin[1].toFixed(6)})`;
+  const q = `[out:json][timeout:20];(` +
+    `nwr["leisure"~"^(park|playground|pitch|fitness_station|garden|recreation_ground|track|dog_park|sports_centre)$"]${A};` +
+    `nwr["place"="square"]${A};way["highway"="pedestrian"]${A};` +
+    `node["tourism"~"^(viewpoint|artwork|attraction)$"]${A};node["amenity"="fountain"]${A};` +
+    `);out center tags 500;`;
+  let lastErr = null;
+  for (const url of CONFIG.PORTAL.OVERPASS_URLS) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, CONFIG.PORTAL.OVERPASS_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        method: 'POST', body: 'data=' + encodeURIComponent(q),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        signal: ctrl ? ctrl.signal : undefined,
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const list = parseOverpass(await res.json(), origin);
+      overpassCache = { key, at: Date.now(), list };
+      return list;
+    } catch (e) { lastErr = e; } finally { clearTimeout(timer); }
+  }
+  throw lastErr || new Error('overpass');
+}
+
+const farEnough = (c, chosen) => chosen.every(o => haversine([o.lat, o.lng], [c.lat, c.lng]) >= CONFIG.PORTAL.MIN_SPACING_M);
+function pickCandidate(pool, origin, lo, hi, chosen, seen) {
+  const ok = pool.filter(c => {
+    if (seen.includes(c.id)) return false;
+    const d = haversine(origin, [c.lat, c.lng]);
+    return d >= lo && d <= hi && farEnough(c, chosen);
+  });
+  return ok.length ? ok[Math.floor(Math.random() * ok.length)] : null;
+}
+// Plano B (sem internet / sem lugares): ponto aleatório dentro da faixa
+function randomSpot(origin, lo, hi, chosen) {
+  let p = null;
+  for (let i = 0; i < 25; i++) {
+    const ll = offsetPoint(origin, randIn(lo, hi), randIn(0, 360));
+    p = { id: null, lat: ll[0], lng: ll[1], name: null, kind: 'random', source: 'random' };
+    if (farEnough(p, chosen)) break;
+  }
+  return p;
+}
+
+function weightedCount() {
+  const w = CONFIG.PORTAL.COUNT_WEIGHTS, tot = w.reduce((a, b) => a + b, 0);
+  let r = Math.random() * tot;
+  for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return i + 1; }
+  return w.length;
+}
+
+function buildPortalSet(origin, pool, type) {
+  const P = CONFIG.PORTAL, L = state.player.level;
+  const lo = P.DIST_MIN_M(L), hi = P.DIST_MAX_M(L);
+  const count = weightedCount(), step = (hi - lo) / count;
+  const pace = portalRefPace(type);
+  const list = [], seen = [];
+  let hasRed = false;
+  for (let i = 0; i < count; i++) {
+    const red = !hasRed && ((DEV.forceRed && i === count - 1) || Math.random() < P.RED.CHANCE);
+    if (red) hasRed = true;
+    const m = red ? P.RED.DIST_MULT : 1;
+    const band = [Math.round((lo + step * i) * m), Math.round((lo + step * (i + 1)) * m)];
+    const c = pickCandidate(pool, origin, band[0], band[1], list, seen)
+           || pickCandidate(pool, origin, lo * m, hi * m, list, seen)
+           || randomSpot(origin, band[0], band[1], list);
+    if (c.id) seen.push(c.id);
+    const portal = buildPortal(c, origin, { type, pace, red });
+    portal.band = band;
+    list.push(portal);
+  }
+  DEV.forceRed = false;
+  return { list: list.sort((a, b) => a.straightM - b.straightM), seen };
+}
+
+/* ---------- posição atual (para a varredura) ---------- */
+async function getHerePosition() {
+  if (DEV.active && DEV.pos) return { lat: DEV.pos[0], lng: DEV.pos[1], acc: 5 };
+  if (gpsLastFix && Date.now() - gpsLastFix.t < 60000 && gpsLastFix.acc <= 50) return { ...gpsLastFix };
+  let pos = null;
+  try {
+    if (IS_NATIVE) {
+      if (!DEV.active && !(await ensureNativePermissions())) return null;
+      const r = await nativePlugin('Geolocation').getCurrentPosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 30000 });
+      pos = { lat: r.coords.latitude, lng: r.coords.longitude, acc: r.coords.accuracy };
+    } else {
+      const prob = gpsSupportProblem();
+      if (prob) { if (!DEV.active) { showGpsProblem(prob); return null; } throw new Error(prob); }
+      pos = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
+        r => resolve({ lat: r.coords.latitude, lng: r.coords.longitude, acc: r.coords.accuracy }), reject,
+        { enableHighAccuracy: true, timeout: DEV.active ? 8000 : 20000, maximumAge: 30000 }));
+    }
+  } catch (e) {
+    if (DEV.active) { DEV.pos = DEV_DEFAULT_POS.slice(); toast('Modo de teste: sem GPS, usando o centro de Brusque. Toque no mapa para mudar.', 'gold'); return { lat: DEV.pos[0], lng: DEV.pos[1], acc: 5 }; }
+    if (e && e.code === 1) showGpsProblem('denied');
+    else if (/disabled|not enabled/i.test(String(e && e.message))) showGpsProblem('disabled');
+    else toast('Não consegui sua localização agora. Vá para um lugar aberto e tente de novo.', 'danger');
+    return null;
+  }
+  if (DEV.active) DEV.pos = [pos.lat, pos.lng];
+  return pos;
+}
+
+/* ---------- ações ---------- */
+async function detectPortals() {
+  const ps = state.portals, now = Date.now();
+  if (portalScanning || gpsLive) return;
+  if (now < ps.nextDetectAt && !DEV.noCooldown) {
+    toast(`Nova varredura disponível em ${Math.ceil((ps.nextDetectAt - now) / 60000)} min.`);
+    return;
+  }
+  portalScanning = true;
+  render();
+  toast('Escaneando a área em busca de portais…');
+  try {
+    const here = await getHerePosition();
+    if (!here) return;
+    const origin = [here.lat, here.lng];
+    const L = state.player.level;
+    const radius = CONFIG.PORTAL.DIST_MAX_M(L) * CONFIG.PORTAL.RED.DIST_MULT * 1.05;
+    let pool = [], offline = false;
+    try { pool = await fetchPortalCandidates(origin, radius); }
+    catch (e) { offline = true; }
+    const type = gpsType || defaultGpsType();
+    const { list, seen } = buildPortalSet(origin, pool, type);
+    const t = Date.now();
+    state.portals = {
+      list, origin, type, detectedAt: t,
+      expiresAt: t + CONFIG.PORTAL.EXPIRE_MIN * 60000,
+      nextDetectAt: t + CONFIG.PORTAL.COOLDOWN_MIN * 60000,
+      rerolls: CONFIG.PORTAL.REROLLS, offline,
+      // guarda só os lugares mais próximos da faixa útil, para "Sortear outro"
+      pool: pool.filter(c => c.d <= radius).slice(0, 80).map(({ id, lat, lng, name, kind, source }) => ({ id, lat, lng, name, kind, source })),
+      seen,
+    };
+    save();
+    portalFlyPending = true;
+    portalFocusId = null;
+    portalScanning = false;
+    vibrate([30, 40, 30, 40, 60]);
+    render();
+    queueBig({ type: 'gates', list });
+    flushBig();
+    if (offline) toast('Sem conexão com o OpenStreetMap: portais em pontos aleatórios. Confira o local antes de ir.', 'danger');
+  } finally {
+    portalScanning = false;
+    if (currentTab === 'gps' && !gpsLive) {
+      const b = document.querySelector('[data-act="gps-portal-detect"]');
+      if (b && b.dataset.scanning) render();
+    }
+  }
+}
+
+function rerollPortal(id) {
+  const ps = state.portals;
+  const i = ps.list.findIndex(p => p.id === id);
+  if (i < 0) return;
+  if (ps.rerolls <= 0 && !DEV.noCooldown) { toast('Sem sorteios restantes nesta varredura.'); return; }
+  const old = ps.list[i], others = ps.list.filter(p => p.id !== id);
+  const [lo, hi] = old.band || [old.straightM * 0.8, old.straightM * 1.2];
+  const L = state.player.level, m = old.red ? CONFIG.PORTAL.RED.DIST_MULT : 1;
+  const c = pickCandidate(ps.pool, ps.origin, lo, hi, others, ps.seen)
+         || pickCandidate(ps.pool, ps.origin, CONFIG.PORTAL.DIST_MIN_M(L) * m, CONFIG.PORTAL.DIST_MAX_M(L) * m, others, ps.seen)
+         || randomSpot(ps.origin, lo, hi, others);
+  if (c.id) ps.seen.push(c.id);
+  const np = buildPortal(c, ps.origin, { type: ps.type, pace: portalRefPace(ps.type), red: old.red });
+  np.band = old.band;
+  ps.list[i] = np;
+  if (ps.rerolls > 0) ps.rerolls--;
+  portalFocusId = np.id;
+  save();
+  render();
+  toast(`Novo portal: rank ${np.rank} · ${fmtDist(np.straightM)}.`);
+  setTimeout(() => focusPortal(np.id, false), 50);
+}
+
+function focusPortal(id, scroll = true) {
+  const p = state.portals.list.find(x => x.id === id);
+  if (!p) return;
+  portalFocusId = id;
+  document.querySelectorAll('.gate-card').forEach(el => el.classList.toggle('focus', el.dataset.id === id));
+  if (portalMap) { try { portalMap.flyTo([p.lat, p.lng], 16, { duration: 0.6 }); } catch (e) { /* ignora */ } }
+  if (scroll) { const m = document.getElementById('portal-map'); if (m) m.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+async function enterPortal(id) {
+  const p = activePortals().find(x => x.id === id);
+  if (!p) { toast('Esse portal já se fechou. Detecte novos portais.'); render(); return; }
+  if (gpsLive) return;
+  requestCompassPermission();          // iPhone: precisa ser no toque do usuário
+  gpsType = p.type || gpsType;
+  await startDungeon({ portal: p });
+}
+
+// Chamado por startDungeon() depois de criar a Dungeon
+function attachPortal(p) {
+  gpsLive.portal = { ...p, status: 'active', enteredAt: Date.now(), startedAt: null, deadline: null, startDist: null, lastDist: null };
+  state.portals.list = state.portals.list.filter(x => x.id !== p.id);
+  save();
+  startCompass();
+}
+
+/* ---------- durante a Dungeon ---------- */
+
+// A cada segundo (e a cada ponto do GPS): começa a contagem e fecha o portal no prazo
+function portalTick(now) {
+  const g = gpsLive, p = g && g.portal;
+  if (!p || p.status !== 'active') return;
+  if (!p.startedAt) {
+    if (g.waiting || !gpsLastFix || g.status === 'paused' || gpsLastFix.acc > CONFIG.GPS.MAX_ACCURACY) return;
+    const d0 = haversine([gpsLastFix.lat, gpsLastFix.lng], [p.lat, p.lng]);
+    if (d0 < CONFIG.PORTAL.MIN_START_M) {
+      g.portal = null;
+      saveLive();
+      toast('Você já está em cima do portal. Detecte portais mais distantes da próxima vez.', 'gold');
+      render();
+      return;
+    }
+    // Saiu de outro lugar, mais longe que na varredura? Recalcula o tempo (nunca diminui)
+    if (d0 > p.straightM * 1.15) p.limitMs = Math.max(p.limitMs, portalLimitMs(d0, p.paceMs, p.slack));
+    p.startedAt = now; p.deadline = now + p.limitMs; p.startDist = Math.round(d0); p.lastDist = d0;
+    saveLive();
+    toast(`Contagem iniciada: ${fmtDuration(p.limitMs)} para alcançar o portal.`, 'gold');
+    return;
+  }
+  if (now >= p.deadline) portalClose(now);
+}
+
+// Cada leitura aceita pelos filtros do GPS chega aqui
+function portalOnFix(lat, lng, acc, now) {
+  const g = gpsLive, p = g && g.portal;
+  if (!p || p.status !== 'active') return;
+  portalTick(now);
+  if (!g.portal || p.status !== 'active' || !p.startedAt || g.status === 'paused') return;
+  const d = haversine([lat, lng], [p.lat, p.lng]);
+  p.lastDist = d;
+  if (d <= arriveRadius(acc)) portalClear(now);
+}
+
+function portalClear(now) {
+  const p = gpsLive.portal;
+  p.status = 'cleared'; p.clearedAt = now; p.rewardXp = p.xp;
+  queueBig({ type: 'clear', portal: { ...p } });       // primeiro a animação, depois um eventual LEVEL UP
+  gainXp(p.xp);
+  for (const [k, v] of Object.entries(CONFIG.PORTAL.STAT_REWARD)) addStat(k, v);
+  const s = state.portalStats;
+  s.cleared++;
+  s.byRank[p.rank] = (s.byRank[p.rank] || 0) + 1;
+  if (p.red) s.red++;
+  const dist = p.startDist || p.straightM;
+  if (dist > s.farthestM) s.farthestM = Math.round(dist);
+  if (!s.bestRank || RANK_IDS.indexOf(p.rank) > RANK_IDS.indexOf(s.bestRank)) s.bestRank = p.rank;
+  const t = now - p.startedAt;
+  if (!s.fastestMs || t < s.fastestMs) s.fastestMs = t;
+  save(); saveLive();
+  vibrate([80, 60, 80, 60, 220]);
+  toast('Portal alcançado. Dungeon limpa.', 'gold', `+${p.xp} XP`);
+  if (document.hidden) portalNotify('[SISTEMA] Portal alcançado', `Dungeon limpa · ${portalTitle(p)} · +${p.xp} XP`);
+  render();
+  setTimeout(flushBig, 300);
+}
+
+// Tempo esgotado (ou Dungeon finalizada antes de chegar): sem penalidade, só XP menor
+function portalClose(now, silent = false) {
+  const p = gpsLive.portal;
+  p.status = 'closed'; p.closedAt = now;
+  // usa a leitura mais recente do GPS (se for boa) para medir o quanto você chegou perto
+  if (gpsLastFix && now - gpsLastFix.t < 15000 && gpsLastFix.acc <= CONFIG.GPS.MAX_ACCURACY) {
+    p.lastDist = haversine([gpsLastFix.lat, gpsLastFix.lng], [p.lat, p.lng]);
+  }
+  const start = p.startDist || p.straightM;
+  const progress = p.lastDist == null ? 0 : clamp(1 - p.lastDist / start, 0, 1);
+  const xp = Math.round(p.xp * CONFIG.PORTAL.CONSOLATION_RATE * progress);
+  p.rewardXp = xp;
+  if (xp > 0) gainXp(xp);
+  state.portalStats.closed++;
+  save(); saveLive();
+  if (silent) return;
+  vibrate([220]);
+  toast('O portal se fechou.', 'danger');
+  setTimeout(() => toast(xp > 0
+    ? `Recompensa pela distância percorrida (${Math.round(progress * 100)}% do caminho). A Dungeon continua.`
+    : 'Sem penalidade. A Dungeon continua normalmente.', 'gold', xp > 0 ? `+${xp} XP` : ''), 700);
+  if (document.hidden) portalNotify('[SISTEMA] O portal se fechou', xp > 0 ? `+${xp} XP pela distância percorrida. A Dungeon continua.` : 'A Dungeon continua normalmente.');
+  render();
+  setTimeout(flushBig, 300);
+}
+
+// Na hora de salvar a atividade: fecha o portal se ainda estiver aberto e gera o resumo
+function portalFinalize(g, now) {
+  const p = g && g.portal;
+  if (!p) return null;
+  if (p.status === 'active') portalClose(now, true);
+  return {
+    name: p.name, kind: p.kind, rank: p.rank, red: p.red, lat: p.lat, lng: p.lng,
+    straightM: p.startDist || p.straightM, limitMs: p.limitMs, result: p.status, xp: p.rewardXp || 0,
+    timeMs: p.clearedAt && p.startedAt ? p.clearedAt - p.startedAt : null,
+  };
+}
+
+function portalNotify(title, body) {
+  if (!IS_NATIVE) return;
+  const LN = nativePlugin('LocalNotifications');
+  if (!LN) return;
+  try {
+    LN.schedule({ notifications: [{ id: Math.floor(Date.now() / 1000) % 2147483647, title, body, smallIcon: 'ic_stat_dungeon', iconColor: '#3fa9ff' }] }).catch(() => {});
+  } catch (e) { /* ignora */ }
+}
+
+function portalNotifText(g) {
+  const p = g && g.portal;
+  if (!p || p.status !== 'active' || !p.startedAt || g.status === 'paused') return null;
+  const d = p.lastDist != null ? p.lastDist : p.straightM;
+  const dt = d >= 1000 ? `${(Math.round(d / 100) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} km` : `${Math.round(d / 50) * 50} m`;
+  return `${portalTitle(p)} · faltam ${dt} · ${Math.ceil(Math.max(0, p.deadline - Date.now()) / 60000)} min`;
+}
+
+function portalResumeNote(g) {
+  const p = g.portal;
+  if (!p || p.status !== 'active') return '';
+  const left = p.deadline ? p.deadline - Date.now() : p.limitMs;
+  return `<p class="small">${esc(portalTitle(p))} ativo · ${left > 0 ? 'fecha em ' + fmtDuration(left) : 'o tempo acabou (o portal fecha ao retomar)'}.</p>`;
+}
+
+/* ---------- bússola ---------- */
+let compassDeg = null, compassAt = 0, compassOn = false;
+function onCompass(e) {
+  let h = null;
+  if (typeof e.webkitCompassHeading === 'number') h = e.webkitCompassHeading;           // iPhone
+  else if (e.absolute && typeof e.alpha === 'number') h = (360 - e.alpha) % 360;        // Android
+  if (h == null) return;
+  const so = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+  compassDeg = (h + so + 360) % 360; compassAt = Date.now();
+}
+function startCompass() {
+  if (compassOn) return;
+  compassOn = true;
+  window.addEventListener('deviceorientationabsolute', onCompass);
+  window.addEventListener('deviceorientation', onCompass);
+}
+function requestCompassPermission() {
+  try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(startCompass).catch(() => {});
+    }
+  } catch (e) { /* ignora */ }
+}
+// Direção para onde você está virado: bússola do celular, ou o rumo do seu movimento
+function currentHeading(now) {
+  if (compassDeg != null && now - compassAt < 3000) return { deg: compassDeg, src: 'compass' };
+  const g = gpsLive;
+  if (!g || g.status !== 'running' || now - g.lastMovedAt > 8000) return null;
+  const seg = curSeg();
+  if (seg.length < 2) return null;
+  const last = seg[seg.length - 1];
+  for (let i = seg.length - 2; i >= 0; i--) {
+    if (last[3] - seg[i][3] >= 8) return { deg: bearing(seg[i], last), src: 'course' };
+  }
+  return null;
+}
+
+/* ---------- interface: painel de portais (aba Dungeon) ---------- */
+function portalBadge(p, big = false) {
+  return `<span class="gc-badge ${big ? 'big' : ''}" style="${pcStyle(p)}"><svg viewBox="0 0 48 48" aria-hidden="true"><polygon points="${hexPoints(24, 24, 21)}"/></svg><b>${p.rank}</b></span>`;
+}
+
+function portalCardHtml(p, rerolls) {
+  const routeKm = p.straightM * CONFIG.PORTAL.ROUTE_FACTOR;
+  const needPace = p.limitMs / (routeKm / 1000);
+  return `
+  <div class="gate-card ${p.red ? 'red' : ''} ${portalFocusId === p.id ? 'focus' : ''}" data-id="${p.id}" style="${pcStyle(p)}">
+    <button class="gc-head" data-act="gps-portal-focus" data-id="${p.id}" aria-label="Ver ${esc(portalTitle(p))} no mapa">
+      ${portalBadge(p)}
+      <span class="gc-title"><b>${esc(portalTitle(p))}</b><span class="small">${esc(portalPlace(p))}</span></span>
+      <span class="gc-xp">+${p.xp} XP</span>
+    </button>
+    <div class="gc-stats">
+      <span>${icon('route')} ${fmtDist(p.straightM)} <em>(~${fmtDist(routeKm)} a pé)</em></span>
+      <span>${icon('clock')} ${Math.round(p.limitMs / 60000)} min</span>
+      <span>${icon('gauge')} ${needPace > 30 * 60000 ? 'ritmo livre' : `precisa de ${fmtPace(needPace)}/km`}</span>
+    </div>
+    ${p.source === 'random' ? `<div class="gc-src">${icon('alert')}<span>Local não verificado (ponto aleatório). Pode cair em lugar sem acesso: sorteie outro se precisar.</span></div>` : ''}
+    <div class="m-actions">
+      <button class="btn ghost" data-act="gps-portal-reroll" data-id="${p.id}" ${rerolls <= 0 && !DEV.noCooldown ? 'disabled' : ''}>${icon('undo')} Sortear (${Math.max(0, rerolls)})</button>
+      <button class="btn primary" data-act="gps-portal-enter" data-id="${p.id}">${icon('swords')} Entrar no portal</button>
+    </div>
+  </div>`;
+}
+
+function renderPortalPanel() {
+  const ps = state.portals, now = Date.now(), list = activePortals();
+  const cd = Math.max(0, ps.nextDetectAt - now);
+  const canDetect = !portalScanning && (cd === 0 || DEV.noCooldown);
+  const pace = portalRefPace(gpsType || defaultGpsType());
+  const btn = portalScanning
+    ? `<button class="btn primary big block" data-act="gps-portal-detect" data-scanning="1" disabled><span class="scan-dot"></span> ESCANEANDO A ÁREA…</button>`
+    : canDetect
+      ? `<button class="btn primary big block" data-act="gps-portal-detect">${icon('target')} ${list.length ? 'Detectar de novo' : 'Detectar portais'}</button>`
+      : `<button class="btn big block" data-act="gps-portal-detect" disabled>${icon('hourglass')} <span data-portal-cd>Nova varredura em ${Math.ceil(cd / 60000)} min</span></button>`;
+  const night = isNight() ? `<div class="warn">${icon('alert')}<span>É noite: prefira portais em ruas movimentadas e iluminadas. Se o lugar parecer deserto, sorteie outro.</span></div>` : '';
+  const offline = list.length && ps.offline ? `<div class="warn danger">${icon('alert')}<span>Sem conexão com o OpenStreetMap: os portais estão em pontos aleatórios e podem não ser acessíveis.</span></div>` : '';
+  const showMap = list.length || DEV.active;
+  return `
+  <section class="panel gates-panel">
+    <header class="phead">
+      <div><div class="eyebrow">${icon('target')} PORTAIS · GATES</div><h2 class="ptitle-lg">${list.length ? `${list.length} ${list.length === 1 ? 'portal' : 'portais'} na área` : 'Nenhum portal ativo'}</h2></div>
+      ${list.length ? `<div class="phead-meta"><b data-portal-exp>${Math.max(1, Math.ceil((ps.expiresAt - now) / 60000))} min</b><span>até fecharem</span></div>` : ''}
+    </header>
+    ${night}${offline}
+    ${showMap ? `<div class="map-wrap"><div class="map small" id="portal-map"></div></div>` : ''}
+    ${DEV.active ? `<p class="info">${icon('crosshair')} Modo de teste: toque no mapa para mudar sua posição.</p>` : ''}
+    ${list.length ? list.map(p => portalCardHtml(p, ps.rerolls)).join('')
+      : emptyState('target', 'Escaneie a área', `O Sistema procura praças, parques e quadras ao seu redor e abre portais de ${fmtDist(CONFIG.PORTAL.DIST_MIN_M(state.player.level))} a ${fmtDist(CONFIG.PORTAL.DIST_MAX_M(state.player.level))}. Chegue antes do tempo acabar para limpar a dungeon.`)}
+    ${btn}
+    <p class="info">Portais são bônus: nunca afetam a sequência nem geram penalidade. Tempo calculado pelo ${pace.source === 'history' ? `seu ritmo real (${fmtPace(pace.msPerKm)}/km)` : `ritmo padrão de ${ACTIVITIES[gpsType || defaultGpsType()].label.toLowerCase()} (${fmtPace(pace.msPerKm)}/km)`}.</p>
+  </section>`;
+}
+
+// Atualiza os contadores do painel sem redesenhar o mapa
+function portalHomeTick() {
+  if (currentTab !== 'gps' || gpsLive || gpsView !== 'home' || portalScanning) return;
+  const ps = state.portals, now = Date.now();
+  if (ps.list.length && now >= ps.expiresAt) {
+    ps.list = [];
+    save();
+    toast('Os portais da área se fecharam.');
+    render();
+    return;
+  }
+  const exp = document.querySelector('[data-portal-exp]');
+  if (exp) exp.textContent = `${Math.max(1, Math.ceil((ps.expiresAt - now) / 60000))} min`;
+  const cd = document.querySelector('[data-portal-cd]');
+  if (cd) {
+    const left = ps.nextDetectAt - now;
+    if (left <= 0) render(); else cd.textContent = `Nova varredura em ${Math.ceil(left / 60000)} min`;
+  }
+}
+setInterval(portalHomeTick, 15000);
+
+/* ---------- interface: HUD durante a Dungeon ---------- */
+function renderPortalHud() {
+  const p = gpsLive.portal;
+  const stTxt = p.status === 'cleared' ? 'LIMPO' : p.status === 'closed' ? 'FECHADO' : '';
+  const head = `
+    <div class="gh-head">
+      ${portalBadge(p)}
+      <span class="gc-title"><b>${esc(portalTitle(p))}</b><span class="small">${esc(portalPlace(p))}</span></span>
+      <span class="gh-state" id="gps-p-state">${stTxt}</span>
+    </div>`;
+  if (p.status === 'cleared') return `
+    <div class="gate-hud cleared" id="gps-portal" data-status="cleared" style="${pcStyle(p)}">${head}
+      <div class="gh-result ok">${icon('check')} DUNGEON LIMPA · +${p.rewardXp} XP · ${fmtDuration(p.clearedAt - p.startedAt)}</div>
+      <p class="info" style="margin-top:8px">A atividade continua contando. Finalize quando quiser.</p>
+    </div>`;
+  if (p.status === 'closed') return `
+    <div class="gate-hud closed" id="gps-portal" data-status="closed" style="${pcStyle(p)}">${head}
+      <div class="gh-result bad">${icon('clock')} O PORTAL SE FECHOU${p.rewardXp ? ` · +${p.rewardXp} XP` : ''}</div>
+      <p class="info" style="margin-top:8px">Sem penalidade. A Dungeon continua normalmente.</p>
+    </div>`;
+  return `
+    <div class="gate-hud" id="gps-portal" data-status="active" style="${pcStyle(p)}">${head}
+      <div class="gh-grid">
+        <div class="gh-compass">
+          <div class="gh-dial"><svg id="gps-p-arrow" viewBox="0 0 72 72" aria-hidden="true"><path d="M36 6 L52 50 L36 41 L20 50 Z"/></svg></div>
+          <span class="gh-dir" id="gps-p-dir">--</span>
+        </div>
+        <div class="gh-cell" id="gps-p-time-cell"><span class="k">Tempo</span><span class="v" id="gps-p-time">--:--</span></div>
+        <div class="gh-cell"><span class="k">Até o portal</span><span class="v" id="gps-p-dist">--</span></div>
+        <div class="gh-cell wide" id="gps-p-pace-cell"><span class="k">Ritmo necessário</span><span class="v" id="gps-p-pace">--:--</span><span class="u" id="gps-p-pace-u">min/km</span></div>
+      </div>
+      <div class="bar"><i id="gps-p-bar" style="width:0%"></i></div>
+    </div>`;
+}
+
+function updatePortalHud(now) {
+  const g = gpsLive, p = g && g.portal, box = document.getElementById('gps-portal');
+  if (!p || !box) return;
+  if (box.dataset.status !== p.status) return;
+  if (p.status !== 'active') return;
+  const $ = id => document.getElementById(id);
+  const here = gpsLastFix ? [gpsLastFix.lat, gpsLastFix.lng] : null;
+  const dist = here ? haversine(here, [p.lat, p.lng]) : (p.lastDist != null ? p.lastDist : p.straightM);
+  $('gps-p-dist').textContent = fmtDist(dist, 2);
+  const st = $('gps-p-state'), tc = $('gps-p-time-cell'), pc = $('gps-p-pace-cell');
+  if (!p.startedAt) {
+    $('gps-p-time').textContent = fmtDuration(p.limitMs);
+    st.textContent = 'AGUARDANDO GPS';
+    $('gps-p-pace').textContent = '--:--';
+    $('gps-p-pace-u').textContent = 'a contagem começa com sinal bom';
+    pc.className = 'gh-cell wide';
+  } else {
+    const left = Math.max(0, p.deadline - now);
+    $('gps-p-time').textContent = fmtDuration(left);
+    tc.className = 'gh-cell' + (left < 60000 ? ' urgent' : '');
+    st.textContent = g.status === 'paused' ? 'PAUSADO · O TEMPO CORRE' : 'PORTAL ABERTO';
+    const routeLeft = Math.max(0, dist - arriveRadius(gpsLastFix && gpsLastFix.acc)) * CONFIG.PORTAL.ROUTE_FACTOR;
+    const need = routeLeft > 10 ? left / (routeLeft / 1000) : Infinity;
+    const ratio = need / p.paceMs;
+    pc.className = 'gh-cell wide ' + (ratio >= 1.1 ? 'ok' : ratio >= 0.95 ? 'tight' : 'hard');
+    $('gps-p-pace').textContent = need > 30 * 60000 ? 'FOLGADO' : fmtPace(need);
+    $('gps-p-pace-u').textContent = `min/km · seu ritmo: ${fmtPace(p.paceMs)}`;
+  }
+  const start = p.startDist || p.straightM;
+  $('gps-p-bar').style.width = `${Math.round(clamp(1 - dist / start, 0, 1) * 100)}%`;
+  if (here) {
+    const brg = bearing(here, [p.lat, p.lng]), hd = currentHeading(now);
+    $('gps-p-arrow').style.transform = `rotate(${Math.round(brg - (hd ? hd.deg : 0))}deg)`;
+    $('gps-p-dir').textContent = hd ? `${cardinal(brg)} · siga a seta` : `${cardinal(brg)} · norte ↑`;
+  }
+}
+
+/* ---------- interface: resumo, lista e histórico ---------- */
+function portalResultHtml(pt) {
+  const ok = pt.result === 'cleared';
+  return `
+  <div class="gate-result ${ok ? 'cleared' : 'closed'}" style="${pcStyle(pt)}">
+    ${portalBadge(pt)}
+    <span class="gc-title"><b>${esc(portalTitle(pt))} ${ok ? 'limpo' : 'se fechou'}</b>
+      <span class="small">${esc(portalPlace(pt))} · ${fmtDist(pt.straightM)}${ok && pt.timeMs ? ` em ${fmtDuration(pt.timeMs)} (limite ${fmtDuration(pt.limitMs)})` : ''}</span></span>
+    ${pt.xp ? `<span class="gc-xp">+${pt.xp} XP</span>` : ''}
+  </div>`;
+}
+const portalChipHtml = pt => `<span class="p-chip ${pt.result}" style="${pcStyle(pt)}">PORTAL ${pt.red ? 'VERMELHO' : pt.rank} ${pt.result === 'cleared' ? '✓' : '✕'}</span>`;
+
+function renderPortalStatsPanel() {
+  const s = state.portalStats;
+  const head = `<header class="phead"><div><div class="eyebrow">${icon('target')} PORTAIS LIMPOS</div></div></header>`;
+  if (!s.cleared && !s.closed) return `<section class="panel">${head}${emptyState('target', 'Nenhum portal ainda', 'Detecte portais na aba Dungeon e chegue antes do tempo acabar.')}</section>`;
+  const cells = RANK_IDS.map(id => {
+    const n = s.byRank[id] || 0, c = CONFIG.RANKS.find(r => r.id === id).color;
+    return `<div class="rank-cell ${n ? '' : 'zero'}" style="--pc:${c};--pc-rgb:${hexToRgb(c)}"><b>${id}</b><span>${n}</span></div>`;
+  }).join('');
+  return `
+  <section class="panel">
+    ${head}
+    <div class="tiles">
+      <div class="rec"><span class="k">Limpos</span><span class="v">${s.cleared}</span></div>
+      <div class="rec"><span class="k">Fechados</span><span class="v">${s.closed}</span></div>
+      <div class="rec"><span class="k">Vermelhos</span><span class="v" style="color:${CONFIG.PORTAL.RED.COLOR}">${s.red}</span></div>
+    </div>
+    <div class="rank-row">${cells}</div>
+    <div class="tiles" style="margin-top:8px">
+      <div class="rec"><span class="k">${icon('route')} Mais distante</span><span class="v">${s.farthestM ? fmtDist(s.farthestM) : '--'}</span></div>
+      <div class="rec"><span class="k">${icon('trophy')} Maior rank</span><span class="v">${s.bestRank || '--'}</span></div>
+      <div class="rec"><span class="k">${icon('bolt')} Mais rápido</span><span class="v">${s.fastestMs ? fmtDuration(s.fastestMs) : '--'}</span></div>
+    </div>
+  </section>`;
+}
+
+/* ---------- mapas ---------- */
+function portalIcon(p, done = false) {
+  return L.divIcon({
+    className: 'gate-mk-wrap', iconSize: [46, 46], iconAnchor: [23, 23],
+    html: `<div class="gate-mk ${p.red ? 'red' : ''} ${done ? 'done' : ''}" style="${pcStyle(p)}"><i class="r1"></i><i class="r2"></i><b>${p.rank}</b></div>`,
+  });
+}
+
+function unmountPortalMap() {
+  if (portalMap) { try { portalMap.remove(); } catch (e) { /* ignora */ } portalMap = null; }
+}
+function mountPortalMap() {
+  unmountPortalMap();
+  const el = document.getElementById('portal-map');
+  if (!el) return;
+  portalMap = makeMap(el);
+  if (!portalMap) return;
+  const ps = state.portals, list = activePortals();
+  const me = DEV.active && DEV.pos ? DEV.pos : (list.length ? ps.origin : (gpsLastFix ? [gpsLastFix.lat, gpsLastFix.lng] : DEV_DEFAULT_POS));
+  const meMk = L.circleMarker(me, { radius: 8, color: '#fff', weight: 2, fillColor: '#3fa9ff', fillOpacity: 1 }).addTo(portalMap).bindTooltip('Você');
+  const pts = [me];
+  if (list.length && ps.origin) {
+    L.circle(ps.origin, { radius: CONFIG.PORTAL.DIST_MAX_M(state.player.level), color: '#3fa9ff', weight: 1, dashArray: '4 6', fill: false, opacity: 0.5 }).addTo(portalMap);
+  }
+  for (const p of list) {
+    L.marker([p.lat, p.lng], { icon: portalIcon(p), keyboard: false }).addTo(portalMap)
+      .on('click', () => {
+        portalFocusId = p.id;
+        document.querySelectorAll('.gate-card').forEach(c => c.classList.toggle('focus', c.dataset.id === p.id));
+        const card = document.querySelector(`.gate-card[data-id="${p.id}"]`);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    pts.push([p.lat, p.lng]);
+  }
+  if (DEV.active) {
+    portalMap.on('click', e => {
+      DEV.pos = [e.latlng.lat, e.latlng.lng];
+      meMk.setLatLng(DEV.pos);
+      toast('Modo de teste: posição alterada.');
+    });
+  }
+  const bounds = L.latLngBounds(pts);
+  if (portalFlyPending) portalMap.setView(me, 16);
+  else if (portalFocusId && list.some(p => p.id === portalFocusId)) {
+    const f = list.find(p => p.id === portalFocusId);
+    portalMap.setView([f.lat, f.lng], 16);
+  } else if (pts.length > 1) portalMap.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+  else portalMap.setView(me, 15);
+  portalMap._sistemaBounds = bounds;
+}
+function portalFitAll() {
+  portalFlyPending = false;
+  if (!portalMap || !portalMap._sistemaBounds) return;
+  try { portalMap.flyToBounds(portalMap._sistemaBounds, { padding: [36, 36], maxZoom: 16, duration: 1.1 }); } catch (e) { /* ignora */ }
+}
+
+// Mapa da Dungeon em andamento: portal + linha tracejada até ele + toque do modo de teste
+function mountLiveExtras() {
+  livePortalMarker = null; livePortalLine = null;
+  if (!liveMap) return;
+  const p = gpsLive && gpsLive.portal;
+  if (p) {
+    livePortalMarker = L.marker([p.lat, p.lng], { icon: portalIcon(p, p.status !== 'active'), keyboard: false }).addTo(liveMap);
+    if (p.status === 'active') {
+      livePortalLine = L.polyline([], { color: portalColor(p), weight: 3, dashArray: '6 8', opacity: 0.9 }).addTo(liveMap);
+    }
+  }
+  liveMap.on('click', e => { if (DEV.active && gpsLive) devWalkTo([e.latlng.lat, e.latlng.lng]); });
+}
+// Retorna os limites (você + portal) para o mapa acompanhar os dois
+function livePortalUpdate(ll) {
+  const p = gpsLive && gpsLive.portal;
+  if (!p || p.status !== 'active' || !livePortalLine) return null;
+  livePortalLine.setLatLngs([ll, [p.lat, p.lng]]);
+  return L.latLngBounds([ll, [p.lat, p.lng]]);
+}
+
+/* ---------- animações ---------- */
+function showPortalsDetected(it, done) {
+  const red = it.list.some(p => p.red);
+  const top = it.list.reduce((a, p) => RANK_IDS.indexOf(p.rank) > RANK_IDS.indexOf(a.rank) ? p : a, it.list[0]);
+  playCinematic(`
+    <div class="cine-beam"></div>
+    <div class="cine-inner">
+      <div class="cine-sys">[ SISTEMA ] VARREDURA CONCLUÍDA</div>
+      <div class="cine-title" style="font-size:clamp(28px,9vw,42px)">PORTAIS DETECTADOS</div>
+      <div class="gate-row">${it.list.map(p => portalBadge(p, true)).join('')}</div>
+      <p class="cine-text">${it.list.length} ${it.list.length === 1 ? 'portal' : 'portais'} na área · o mais forte: rank ${top.rank}.${red ? '<br><b style="color:' + CONFIG.PORTAL.RED.COLOR + '">Um PORTAL VERMELHO foi detectado.</b>' : ''}</p>
+      <p class="cine-hint">Toque para continuar</p>
+    </div>`, red ? CONFIG.PORTAL.RED.COLOR : '#5fe3ff', { minMs: 400, autoMs: 2800 }, () => { done(); portalFitAll(); });
+}
+
+function showPortalClear(it, done) {
+  const p = it.portal, c = portalColor(p);
+  vibrate([80, 60, 80, 60, 220]);
+  playCinematic(`
+    <div class="cine-beam"></div>
+    <div class="cine-inner">
+      <div class="cine-sys">[ SISTEMA ] ${p.red ? 'PORTAL VERMELHO SELADO' : 'PORTAL ALCANÇADO'}</div>
+      <div class="cine-title">DUNGEON LIMPA</div>
+      <div class="cine-ranks">
+        <div class="hexwrap">
+          <span class="burst"></span><span class="burst b2"></span>
+          <svg class="hexbig" viewBox="0 0 150 150" aria-hidden="true"><polygon points="${hexPoints(75, 75, 66)}"/><text x="75" y="77">${p.rank}</text></svg>
+        </div>
+      </div>
+      <p class="cine-text" style="margin-top:24px"><b style="color:var(--gold);font-family:var(--tech);font-size:24px">+${p.xp} XP</b><br>${esc(portalPlace(p))} · ${fmtDuration(p.clearedAt - p.startedAt)}</p>
+      <p class="cine-hint">Toque para continuar</p>
+    </div>`, c, { minMs: 600, autoMs: 3800 }, done);
+}
+
+/* ---------- MODO DE TESTE (escondido) ----------
+   Ativar: toque 7 vezes seguidas no logo "SISTEMA" do topo (ou abra com ?dev=1).
+   - O GPS real fica desligado; sua posição é simulada.
+   - Antes da Dungeon: toque no mapa dos portais para mudar sua posição.
+   - Durante a Dungeon: toque no mapa e você "anda" até o ponto na velocidade escolhida
+     (passa pelos mesmos filtros do GPS real). */
+const DEV = { active: /[?&]dev=1\b/.test(location.search), pos: null, target: null, speed: 3, timer: null, noCooldown: false, forceRed: false, taps: [] };
+
+function devToggle(on) {
+  DEV.active = on;
+  if (!on) { devStopWalker(); DEV.target = null; DEV.noCooldown = false; DEV.forceRed = false; }
+  toast(on ? 'Modo de teste ativado. O GPS real fica desligado; toque no mapa para mover sua posição.' : 'Modo de teste desativado.', 'gold');
+  if (gpsLive && gpsLive.status !== 'paused') startWatch();      // troca a fonte do GPS
+  render();
+}
+function devBrandTap() {
+  const now = Date.now();
+  DEV.taps = DEV.taps.filter(t => now - t < 3000).concat(now);
+  if (DEV.taps.length >= 7) { DEV.taps = []; devToggle(!DEV.active); }
+}
+function devStartWalker() {
+  if (!DEV.pos) DEV.pos = gpsLastFix ? [gpsLastFix.lat, gpsLastFix.lng] : (state.portals.origin ? state.portals.origin.slice() : DEV_DEFAULT_POS.slice());
+  if (!DEV.timer) DEV.timer = setInterval(devStep, 1000);
+}
+function devStopWalker() {
+  if (DEV.timer) clearInterval(DEV.timer);
+  DEV.timer = null;
+}
+function devStep() {
+  if (!DEV.active || !gpsLive) { devStopWalker(); return; }
+  if (DEV.target) {
+    const d = haversine(DEV.pos, DEV.target);
+    if (d <= DEV.speed) { DEV.pos = DEV.target.slice(); DEV.target = null; }
+    else DEV.pos = offsetPoint(DEV.pos, DEV.speed, bearing(DEV.pos, DEV.target));
+  }
+  onPosition({ coords: { latitude: DEV.pos[0], longitude: DEV.pos[1], accuracy: 5 } });
+}
+function devWalkTo(ll) {
+  DEV.target = ll;
+  toast(`Modo de teste: indo até o ponto a ${fmtNum(DEV.speed)} m/s (${fmtDist(haversine(DEV.pos || ll, ll))}).`);
+}
+function devGotoPortal() {
+  const p = gpsLive && gpsLive.portal;
+  if (!p) { toast('Nenhum portal ativo nesta Dungeon.'); return; }
+  devWalkTo([p.lat, p.lng]);
+}
+function devClosePortal() {
+  const p = gpsLive && gpsLive.portal;
+  if (!p || p.status !== 'active') { toast('Nenhum portal aberto.'); return; }
+  if (!p.startedAt) { toast('A contagem ainda não começou (aguardando o primeiro sinal).'); return; }
+  p.deadline = Date.now() - 1;
+  portalTick(Date.now());
+}
+function renderDevPanel() {
+  const sp = [[1.4, 'Andar'], [3, 'Trotar'], [9, 'Turbo']];
+  return `
+  <section class="panel dev">
+    <header class="phead"><div><div class="eyebrow" style="color:var(--gold)">${icon('sliders')} MODO DE TESTE</div></div></header>
+    <p class="info" style="margin-top:0">GPS real desligado. ${gpsLive ? 'Toque no mapa da Dungeon para andar até o ponto.' : 'Toque no mapa dos portais para mudar sua posição.'}</p>
+    <div class="dev-grid">${sp.map(([v, l]) => `<button class="chip ${DEV.speed === v ? 'on' : ''}" data-act="gps-dev-speed" data-v="${v}">${l} ${fmtNum(v)} m/s</button>`).join('')}</div>
+    ${gpsLive ? `<div class="m-actions" style="grid-template-columns:1fr 1fr">
+      <button class="btn" data-act="gps-dev-goto">${icon('target')} Ir ao portal</button>
+      <button class="btn danger" data-act="gps-dev-close">${icon('clock')} Fechar portal</button></div>` : ''}
+    <div class="m-actions" style="grid-template-columns:1fr 1fr">
+      <button class="btn ${DEV.noCooldown ? 'gold' : 'ghost'}" data-act="gps-dev-nocd">Sem espera: ${DEV.noCooldown ? 'ON' : 'OFF'}</button>
+      <button class="btn ${DEV.forceRed ? 'gold' : 'ghost'}" data-act="gps-dev-red">Vermelho: ${DEV.forceRed ? 'ON' : 'OFF'}</button>
+    </div>
+    <button class="btn ghost block" data-act="gps-dev-off">Sair do modo de teste</button>
+  </section>`;
+}
+document.querySelector('.brand').addEventListener('click', devBrandTap);
 
 
 /* ---------- INICIALIZAÇÃO ---------- */
