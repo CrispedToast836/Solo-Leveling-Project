@@ -769,10 +769,15 @@ const CONFIG = {
   // Mapa base (Leaflet). Os provedores são tentados em ordem: se um falhar
   // FAIL_LIMIT vezes seguidas sem carregar nenhum tile, o app passa para o próximo.
   MAP: {
+    // Chave gratuita do CARTO (exigida nos mapas raster). Troque aqui quando precisar.
+    // Vazia ('') → o app pula o CARTO e usa o próximo provedor (OpenStreetMap).
+    CARTO_KEY: 'cb1_4jnk_1_bf4c7470a43159d90e7d0f33',
     PROVIDERS: [
       {
         id: 'carto-dark', name: 'CARTO Dark Matter', dark: true,
-        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',   // {r} = @2x em telas de celular
+        // {r} = @2x em telas de celular · {key} = CARTO_KEY (preenchido pelo app)
+        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key={key}',
+        keyName: 'CARTO_KEY',          // sem essa chave no CONFIG, o provedor é pulado
         subdomains: 'abcd', maxZoom: 20,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       },
@@ -3068,10 +3073,19 @@ function addBaseLayer(m, el, idx) {
   const list = CONFIG.MAP.PROVIDERS;
   if (idx >= list.length) { showMapNotice(el, 'fail'); return; }
   const pv = list[idx];
+  // Provedor que exige chave e está sem chave: pula direto (evita tiles com marca d'água)
+  const key = pv.keyName ? String(CONFIG.MAP[pv.keyName] || '').trim() : '';
+  if (pv.keyName && !key) {
+    console.warn('[SISTEMA] mapa: sem', pv.keyName, '— pulando', pv.id);
+    if (idx + 1 > mapProviderIdx) mapProviderIdx = idx + 1;
+    addBaseLayer(m, el, idx + 1);
+    return;
+  }
   el.style.setProperty('--tile-filter', pv.dark ? CONFIG.MAP.DARK_FILTER : CONFIG.MAP.LIGHT_FILTER);
   el.dataset.provider = pv.id;
   const layer = L.tileLayer(pv.url, {
     subdomains: pv.subdomains || 'abc', maxZoom: pv.maxZoom || 19, attribution: pv.attribution,
+    key: encodeURIComponent(key),   // usado no {key} da URL
   });
   let errorsInRow = 0, loads = 0, gaveUp = false;
   layer.on('tileload', () => {
